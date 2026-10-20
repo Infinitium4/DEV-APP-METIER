@@ -27,3 +27,11 @@ User story :
 - En tant que client je peux lire mes commandes et je peux editer le jour de passage
 - En tant que manager je ne peux pas editer les ordres de passages
 - En tant qu'admin je peux  tout faire
+
+| Roles | Lire les livraison | Modifier les livraisons | ajouter les livraisons | finir(supprimer) une livraison | commander | programmer une commande |
+|---|---|---|---|---|
+| Admin | x | x | x
+| Manager | x | x | x
+| Livreur | o | o|
+| Client | o | o | 
+
