@@ -19,3 +19,11 @@ Risques/enjeux
 - Commande pendant la panne pas prise en compte
 - Ne plus avoir de suivi sur les camions
 - livreurs bloqués (sans adresses)
+
+User story :
+ En tant que ROLES je peux / peux pas faire :
+- En tant que livreurs je peux lire les commandes qui me sont affilier
+                    editer l'ordre de passage qui me sont affilier et qui sont a programmé a demain
+- En tant que client je peux lire mes commandes et je peux editer le jour de passage
+- En tant que manager je ne peux pas editer les ordres de passages
+- En tant qu'admin je peux  tout faire
