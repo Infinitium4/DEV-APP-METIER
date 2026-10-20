@@ -1,21 +1,32 @@
-Entreprise transport, Excel imprimer pour gestion des transport chaque jour. Faire une app pour gerer cette situation. 
-Les roles de l'app :
-- Livreurs
-- Clients
-- Manager ( responsable de l'organisation )
+Hôtel d'un casino
 
-Acces :
-- Livreurs : acces au planning de ses livraisons et possibilité de finir une commande
-- Clients : acces a ses commandes
-- Manager : acces et modifications de tout les plannings
+rôles : 
+- clients
+- Receptionistes
+- Personnel d'entretien
+- Personnel de sécurité
+- Croupier
+- Manager hôtel
+- Manager casino
+- Manager général
 
-Règles de gestions :
-- Verrifier que la commande, le camion et le livreurs sont tous disponnible sur le meme site de livraison
-- Que le meme colis/camion/chauffeur n'est pas attribué 2 fois (ou plus)
-- verifier que le volume annoncé des colis n'est pas superrieur au volume disponnible du vehicule
-- verifier que les adresses des colis existe
+
+Règles de gestion :
+- Que la chambre soit disponible avant réservation
+- Que la chambre soit nétoyée avant l'arrivée des clients
+- Avoir des jetons de disponibles
+- Avoir minimum 1 receptionniste 24h/24
+- Avoir minimum 1 vigile 24h/24
+- Le personnel d'entretient ne renettoie pas une chambre déjà nettoyée
+- Avoir minimum un croupier par table ouverte
 
 Risques/enjeux
-- Commande pendant la panne pas prise en compte
-- Ne plus avoir de suivi sur les camions
-- livreurs bloqués (sans adresses)
+- 
+-
+-
+-
+-
+-
+-
+-
+-
