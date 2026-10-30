@@ -1,37 +1,56 @@
-# Hôtel-casino
+# Hôtel
 
-Hôtel d'un casino
+Gestion d'un hôtel
 
 rôles :
 - clients
 - Receptionistes
 - Personnel d'entretien
 - Personnel de sécurité
-- Croupier
-- Manager hôtel
-- Manager casino
-- Manager général
+- Manager
 
 
 Règles de gestion :
 - Que la chambre soit disponible avant réservation
 - Que la chambre soit nétoyée avant l'arrivée des clients
-- Avoir des jetons de disponibles
 - Avoir minimum 1 receptionniste 24h/24
 - Avoir minimum 1 vigile 24h/24
 - Le personnel d'entretient ne renettoie pas une chambre déjà nettoyée
-- Avoir minimum un croupier par table ouverte
 
 Risques/enjeux
--
--
--
--
--
--
--
--
--
+
+
+
+
+
+
+
+
+## User stories — Hôtel
+
+- En tant que client, je peux consulter les chambres disponibles pour les dates de mon séjour afin de choisir une chambre adaptée.
+- En tant que client, je peux réserver une chambre disponible afin de préparer mon séjour. Une chambre déjà réservée sur les mêmes dates ne peut pas être réservée une seconde fois.
+- En tant que client, je peux consulter mes réservations afin de retrouver les informations de mon séjour.
+
+-  En tant que réceptionniste, je peux consulter les réservations, les arrivées et les départs prévus afin d'organiser l'accueil des clients.
+- En tant que réceptionniste, je peux créer une réservation pour un client afin de prendre en charge une demande à l'accueil, uniquement si la chambre est disponible aux dates demandées.
+- En tant que réceptionniste, je peux enregistrer l'arrivée d'un client et lui attribuer une chambre disponible et nettoyée afin de l'accueillir dans de bonnes conditions.
+-  En tant que réceptionniste, je peux enregistrer le départ d'un client afin de libérer sa chambre et de la signaler comme à nettoyer.
+
+-  En tant que membre du personnel d'entretien, je peux consulter les chambres à nettoyer et les arrivées prévues afin de prioriser les chambres attendues par les clients.
+-  En tant que membre du personnel d'entretien, je peux signaler qu'une chambre est en cours de nettoyage afin d'éviter qu'un collègue intervienne en même temps.
+- En tant que membre du personnel d'entretien, je peux marquer une chambre comme nettoyée afin de permettre son attribution à un client. Une chambre déjà nettoyée ne peut pas faire l'objet d'un nouveau nettoyage tant que son état n'a pas changé.
+
+- En tant que membre du personnel de sécurité, je peux consulter mon planning afin de connaître mes horaires et les zones à surveiller.
+- En tant que membre du personnel de sécurité, je peux signaler un incident afin d'en informer le manager et d'en assurer le suivi.
+
+- En tant que manager, je peux organiser le planning des réceptionnistes et du personnel de sécurité afin d'assurer la présence d'au moins un réceptionniste et un vigile 24 h/24. Le système me signale tout créneau non couvert.
+- En tant que manager, je peux consulter l'occupation des chambres et leur état de nettoyage afin de suivre l'activité de l'hôtel et d'anticiper les arrivées.
+
+
+
+
+
 
 # Transport
 
