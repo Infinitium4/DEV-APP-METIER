@@ -48,14 +48,26 @@ Risques/enjeux
 
 - En tant que manager, je peux organiser le planning des réceptionnistes et du personnel de sécurité afin d'assurer la présence d'au moins un réceptionniste et un vigile 24 h/24. Le système me signale tout créneau non couvert.
 - En tant que manager, je peux consulter l'occupation des chambres et leur état de nettoyage afin de suivre l'activité de l'hôtel et d'anticiper les arrivées.
-| Roles | Voir les chambres dispo | Reserver une chambre | mettre une chambre à laver | consulter les chambres à laver | plannifier les cycles de garde | consulter les cycles de garde |
-|---|---|---|---|---|---|---|
-| clients | x |x |   |   | ||
-| Receptionistes | x | x | x ||||
-| Personnel d'entretien |x |||x|||
-| Personnel de sécurité ||||||x|
-| Manager garde |||||x|x|
-| Manager hotel | x|x|x|
+
+## Droits d'accès — Hôtel
+
+**Légende :** x = autorisé ; case vide = non autorisé.
+
+| Rôle                  | Voir les disponibilités | Réserver une chambre | Signaler une chambre à nettoyer | Voir les chambres à nettoyer | Suivre et terminer un nettoyage | Planifier les gardes | Consulter les gardes |
+|-----------------------|:-----------------------:|:--------------------:|:------------------------------:|:----------------------------:|:-------------------------------:|:--------------------:|:--------------------:|
+| Client                | x                       | x                    |                                |                              |                                 |                      |                      |
+| Réceptionniste        | x                       | x                    | x                              | x                            |                                 |                      | x                    |
+| Personnel d'entretien |                         |                      | x                              | x                            | x                               |                      |                      |
+| Personnel de sécurité |                         |                      |                                |                              |                                 |                      | x                    |
+| Manager de garde      |                         |                      |                                |                              |                                 | x                    | x                    |
+| Manager hôtel         | x                       | x                    | x                              | x                            | x                               | x                    | x                    |
+| Manager général       | x                       | x                    | x                              | x                            | x                               | x                    | x                    |
+
+Le client réserve pour lui-même. Le personnel d'entretien intervient sur les chambres qui lui sont affectées. Les réceptionnistes et le personnel de sécurité consultent uniquement leur propre planning ; les managers consultent tous les plannings de garde.
+
+Les droits ci-dessus constituent une proposition : le manager de garde organise les gardes de la réception et de la sécurité, le manager hôtel supervise les opérations de l'hôtel et le manager général dispose de tous les droits présentés. Le terme « manager » dans les user stories désigne le responsable compétent selon l'action.
+
+Les autorisations restent soumises aux règles de gestion : disponibilité avant réservation, chambre nettoyée avant attribution, absence de double nettoyage et présence d'au moins un réceptionniste et un vigile 24 h/24. Le signalement d'une chambre à nettoyer par l'entretien concerne un besoin constaté, sans relancer le nettoyage d'une chambre déjà propre.
 
 # Transport
 
