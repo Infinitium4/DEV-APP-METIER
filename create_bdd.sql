@@ -1,3 +1,4 @@
+-- Creation de la base et des tables pour MariaDB.
 CREATE DATABASE IF NOT EXISTS HotelBDD;
 
 USE HotelBDD;
@@ -7,19 +8,19 @@ CREATE TABLE IF NOT EXISTS client (
     num_tel VARCHAR(20) NOT NULL,
     nom VARCHAR(50) NOT NULL,
     prenom VARCHAR(50) NOT NULL
-) 
+) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS chambre (
     numero INT AUTO_INCREMENT PRIMARY KEY,
     nb_lit INT NOT NULL,
     reserver BIT NOT NULL,
     propre BIT NOT NULL
-) 
+) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS `role` (
     id INT AUTO_INCREMENT PRIMARY KEY,
     nom VARCHAR(50) NOT NULL
-) 
+) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS personnel (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -27,7 +28,7 @@ CREATE TABLE IF NOT EXISTS personnel (
     id_role INT NOT NULL,
 
     FOREIGN KEY (id_role) REFERENCES `role`(id)
-) 
+) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS reservation (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -38,7 +39,7 @@ CREATE TABLE IF NOT EXISTS reservation (
 
     FOREIGN KEY (id_client) REFERENCES client(id),
     FOREIGN KEY (id_chambre) REFERENCES chambre(numero)
-) 
+) ENGINE=InnoDB;
 
 CREATE TABLE IF NOT EXISTS nettoyage (
     id INT AUTO_INCREMENT PRIMARY KEY,
@@ -49,7 +50,8 @@ CREATE TABLE IF NOT EXISTS nettoyage (
 
     FOREIGN KEY (id_personnel) REFERENCES personnel(id),
     FOREIGN KEY (id_chambre) REFERENCES chambre(numero)
-) 
+) ENGINE=InnoDB;
+
 CREATE TABLE IF NOT EXISTS tour_de_garde (
     id INT AUTO_INCREMENT PRIMARY KEY,
     date_debut DATETIME NOT NULL,
@@ -57,4 +59,4 @@ CREATE TABLE IF NOT EXISTS tour_de_garde (
     id_personnel INT NOT NULL,
 
     FOREIGN KEY (id_personnel) REFERENCES personnel(id)
-);
+) ENGINE=InnoDB;
