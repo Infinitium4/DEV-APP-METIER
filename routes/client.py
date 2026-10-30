@@ -16,11 +16,11 @@ def get_client(client_id: int):
 def get_client_num(client_id: int):
     return show_client_num(client_id)
 
-@router.delete("/{id_client}")
+@router.delete("/{id_client}", status_code=204)
 def delete_client(client_id: int):
     return supprimer_client(client_id)
 
-@router.post("/")
+@router.post("/", status_code=201)
 def create_client(client: ClientCreate):
     return insert_client(
         client.nom,

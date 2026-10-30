@@ -1,5 +1,7 @@
 from fastapi import FastAPI, Request
+from fastapi.responses import JSONResponse
 from routes.client import router as client_router
+
 
 app = FastAPI()
 
