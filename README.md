@@ -1,99 +1,121 @@
-# DEV-APP-METIER
+﻿# DEV-APP-METIER
 
-Application de gestion d'un hôtel avec une API Python FastAPI et une base MariaDB hébergée sur une VM. Le client HTTP appelle l'API, qui interroge la base puis renvoie les résultats en JSON.
+Projet pédagogique de gestion d'un hôtel : API Python avec FastAPI et base de données MariaDB. Le client HTTP appelle une route, le service exécute les requêtes SQL et l'API renvoie une réponse JSON.
 
-- [Schéma UML Hôtel-casino en Markdown](docs/uml-hotel-casino.md)
+## Structure du projet
 
-## Initialisation de la base
-
-Pour initialiser MariaDB, exécuter dans cet ordre :
-
-1. [create_bdd.sql](create_bdd.sql) pour créer la base et les tables.
-2. [insert_donnees.sql](insert_donnees.sql) pour ajouter les données d'exemple.
-
-Le script d'insertion regroupe les données par table avec `INSERT IGNORE`. Les identifiants fixes permettent de relancer le script : une ligne dont la clé primaire existe déjà est ignorée. Il contient un client, deux chambres, trois rôles, trois membres du personnel, une réservation, un nettoyage et deux créneaux de garde.
-
-Ce jeu de données est destiné à une base de démonstration initialement vide. Une même valeur avec un autre identifiant n'est pas considérée comme un doublon ; les contrôles de chevauchement des réservations et des gardes doivent être assurés par l'application.
-
-## Fonctionnement de l'API
-
-L'API est initialisée dans [main.py](main.py) avec `app = FastAPI()`. Ce fichier enregistre le routeur des clients avec `app.include_router(client_router)`.
-
-Pour une requête `GET /clients/`, le parcours est le suivant :
-
-```mermaid
-sequenceDiagram
-    autonumber
-    participant Client as Client HTTP
-    participant API as API FastAPI
-    participant Service as Service clients
-    participant BDD as MariaDB sur la VM
-
-    Client->>API: GET /clients/
-    API->>Service: show_clients()
-    Service->>BDD: Ouvrir une connexion via get_connection()
-    Service->>BDD: CALL get_clients()
-    BDD-->>Service: Resultats SQL
-    Service->>BDD: Fermer la connexion
-    Service-->>API: Liste de dictionnaires Python
-    API-->>Client: Reponse HTTP avec un tableau JSON
+```text
+main.py                Application FastAPI, enregistrement des routeurs et gestion des 404
+database.py            Connexion MariaDB avec PyMySQL
+routes/                Définition des routes HTTP
+services/              Requêtes SQL et gestion des connexions
+models/                Modèles Pydantic pour valider les données reçues
+create_bdd.sql         Création de la base HotelBDD et des tables
+insert_donnees.sql     Données de démonstration
+docs/                  Documentation du projet
 ```
 
-La route reçoit la requête, le service exécute la requête SQL et FastAPI transforme le résultat Python en JSON. La réponse revient au client qui a appelé la route.
+Seul le module clients est implémenté et son routeur enregistré dans `main.py`. Les fichiers des modules chambres, réservations, personnel, rôles, nettoyages et tours de garde sont actuellement vides.
 
-### Répartition du code
+## Installation et lancement
 
-| Fichier | Responsabilité |
-| --- | --- |
-| [main.py](main.py) | Créer l'application FastAPI et enregistrer les routeurs. |
-| [routes/client.py](routes/client.py) | Définir la route `GET /clients/` et appeler le service clients. |
-| [services/client.py](services/client.py) | Ouvrir une connexion, exécuter `CALL get_clients()`, récupérer les lignes et fermer la connexion. |
-| [database.py](database.py) | Configurer la connexion à MariaDB avec PyMySQL. `DictCursor` permet de récupérer les lignes sous forme de dictionnaires. |
+Prérequis : Python avec le module `venv`, MariaDB accessible depuis la machine exécutant l'API et un compte disposant des droits nécessaires.
 
-### Routes actuellement disponibles
+Ouvrir un terminal dans le dossier contenant `main.py` (le sous-dossier `DEV-APP-METIER` si le terminal se trouve dans le dossier parent).
 
-| Méthode | Route | Comportement |
-| --- | --- | --- |
-| `GET` | `/` | Renvoyer un message d'accueil statique. Cette route n'interroge pas la base et ne vérifie pas la connexion MariaDB. |
-| `GET` | `/clients/` | Appeler la procédure SQL `get_clients()` et renvoyer ses résultats en JSON. |
+Sous PowerShell :
 
-Pour le moment, seul le routeur clients est enregistré dans `main.py`.
-
-Exemple de réponse JSON possible pour `/clients/` :
-
-```json
-[
-  {
-    "id": 1,
-    "num_tel": "0600000001",
-    "nom": "Dupont",
-    "prenom": "Marie"
-  }
-]
-```
-
-### Connexion à MariaDB sur la VM
-
-La configuration actuelle se trouve dans [database.py](database.py) :
-
-| Paramètre | Valeur |
-| --- | --- |
-| Adresse de la VM | `172.16.113.89` |
-| Port MariaDB | `3306` |
-| Base utilisée par l'API | `ma_database` |
-
-La machine qui exécute l'API doit pouvoir joindre la VM sur ce port, et le compte configuré doit avoir les droits nécessaires sur la base.
-
-Les scripts SQL du dépôt créent et remplissent `HotelBDD`, alors que l'API utilise actuellement `ma_database`. Pour utiliser ces données avec l'API, aligner le nom de la base dans `database.py` et dans les scripts SQL.
-
-La procédure `get_clients()` doit également exister dans la base utilisée par l'API. Le service l'appelle, mais les scripts SQL du dépôt ne la définissent pas encore.
-
-### Lancer l'API
-
-Depuis la racine du projet, avec les modules `fastapi`, `uvicorn` et `pymysql` installés :
-
-```sh
+```powershell
+python -m venv .venv
+.\.venv\Scripts\Activate.ps1
+python -m pip install fastapi uvicorn pymysql
 python -m uvicorn main:app --reload
 ```
 
-Avec les paramètres par défaut, la route clients est accessible sur <http://127.0.0.1:8000/clients/> et la documentation interactive sur <http://127.0.0.1:8000/docs>.
+Le dépôt ne contient pas encore de fichier de dépendances avec des versions fixées.
+
+- API : <http://127.0.0.1:8000/>
+- Documentation interactive Swagger : <http://127.0.0.1:8000/docs>
+- Documentation ReDoc : <http://127.0.0.1:8000/redoc>
+
+## Base de données
+
+La connexion est configurée directement dans [database.py](database.py).
+
+| Paramètre | Valeur actuelle |
+| --- | --- |
+| Hôte | `172.16.113.89` |
+| Port | `3306` |
+| Base | `ma_database` |
+| Utilisateur | `admin` |
+
+Le mot de passe est également défini dans ce fichier. `pymysql.cursors.DictCursor` renvoie les lignes sous forme de dictionnaires, avec les noms des colonnes comme clés.
+
+Pour initialiser une base de démonstration, exécuter avec un client MariaDB, dans cet ordre :
+
+1. [create_bdd.sql](create_bdd.sql), qui crée `HotelBDD` et ses tables.
+2. [insert_donnees.sql](insert_donnees.sql), qui ajoute les données d'exemple.
+
+**Le nom de base doit être aligné avant utilisation** : les scripts ciblent `HotelBDD`, alors que l'API se connecte à `ma_database`.
+
+Les tables prévues sont `client`, `chambre`, `role`, `personnel`, `reservation`, `nettoyage` et `tour_de_garde`.
+
+Les insertions utilisent `INSERT IGNORE` et des identifiants fixes : une ligne dont la clé primaire existe déjà est conservée. Les exemples comprennent un client, deux chambres, trois rôles, trois membres du personnel, une réservation, un nettoyage et deux créneaux de garde. Ces données sont destinées à une base de démonstration initialement vide.
+
+## Fonctionnement de l'API
+
+```mermaid
+sequenceDiagram
+    participant HTTP as Client HTTP
+    participant Route as routes/client.py
+    participant Service as services/client.py
+    participant BDD as MariaDB
+    HTTP->>Route: GET /clients/
+    Route->>Service: show_clients()
+    Service->>BDD: SELECT * FROM client
+    BDD-->>Service: Lignes SQL
+    Note over Service,BDD: La connexion est fermée dans finally
+    Service-->>Route: Liste de dictionnaires
+    Route-->>HTTP: Tableau JSON
+```
+
+Les modèles [ClientCreate et ClientUpdate](models/client.py) déclarent trois champs obligatoires de type chaîne : `nom`, `email` et `telephone`. Le modèle de mise à jour exige lui aussi les trois champs.
+
+### Routes déclarées
+
+Ces routes sont présentes dans le code ; les limites ci-dessous expliquent celles qui nécessitent encore une correction.
+
+| Méthode | Route | Comportement prévu |
+| --- | --- | --- |
+| `GET` | `/` | Message d'accueil statique ; ne vérifie pas la connexion à MariaDB. |
+| `GET` | `/clients/` | Liste des clients. |
+| `GET` | `/clients/{client_id}` | Client correspondant à l'identifiant. |
+| `GET` | `/clients/num/{client_id}` | Numéro de téléphone du client, lu dans `num_tel`. |
+| `POST` | `/clients/` | Création d'un client ; statut déclaré `201`. |
+| `PUT` | `/clients/{client_id}` | Modification d'un client. |
+| `DELETE` | `/clients/{id_client}` | Suppression d'un client ; statut déclaré `204`. |
+
+Exemple de corps JSON attendu par les routes `POST` et `PUT` :
+
+```json
+{
+  "nom": "Dupont",
+  "email": "dupont@example.com",
+  "telephone": "0600000001"
+}
+```
+
+Les services renvoient une erreur HTTP `500` en cas d'échec SQL ou de connexion. Certains cas de client absent déclenchent une erreur `404`. Le gestionnaire global de `main.py` remplace les réponses `404`, y compris celles des services, par un JSON contenant `error`, `message` et `path`, avec le message « La route demandée n'existe pas ».
+
+## Limites actuelles
+
+- **Schéma clients incohérent** : le script SQL définit `id`, `num_tel`, `nom` et `prenom`. Les services de création et de modification utilisent `nom`, `email` et `telephone`. Ils ne sont donc pas compatibles avec la table créée par ce script.
+- **Modification** : `update_client()` appelle `updated.commit()` alors que `updated` est un entier provenant de `cursor.rowcount`. Cet appel provoque une erreur ; la transaction devrait être validée sur la connexion.
+- **Suppression** : le chemin déclare `id_client`, mais la fonction attend `client_id`. FastAPI traite donc `client_id` comme un paramètre de requête obligatoire au lieu de récupérer l'identifiant du chemin.
+- **Authentification et permissions** : aucun contrôle d'accès par rôle n'est encore implémenté.
+- **Docker** : le `dockerfile` est vide. Le fichier Compose définit uniquement MariaDB, requiert `DB_PASSWORD` et publie `127.0.0.1:5432:5432`, alors que l'API cible le port MariaDB `3306`. Cette configuration doit être adaptée avant de servir au lancement du projet.
+
+## Documentation complémentaire
+
+- [Schéma UML hôtel-casino](docs/uml-hotel-casino.md)
+- [Proposition de contrôle d'accès par rôle](docs/acces-par-role.md)
