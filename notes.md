@@ -8,6 +8,8 @@ rôles :
 - Personnel d'entretien
 - Personnel de sécurité
 - Manager
+- Manager hôtel
+- Manager général
 
 
 Règles de gestion :
@@ -46,11 +48,14 @@ Risques/enjeux
 
 - En tant que manager, je peux organiser le planning des réceptionnistes et du personnel de sécurité afin d'assurer la présence d'au moins un réceptionniste et un vigile 24 h/24. Le système me signale tout créneau non couvert.
 - En tant que manager, je peux consulter l'occupation des chambres et leur état de nettoyage afin de suivre l'activité de l'hôtel et d'anticiper les arrivées.
-
-
-
-
-
+| Roles | Voir les chambres dispo | Reserver une chambre | mettre une chambre à laver | consulter les chambres à laver | plannifier les cycles de garde | consulter les cycles de garde |
+|---|---|---|---|---|---|---|
+| clients | x |x |   |   | ||
+| Receptionistes | x | x | x ||||
+| Personnel d'entretien |x |||x|||
+| Personnel de sécurité ||||||x|
+| Manager garde |||||x|x|
+| Manager hotel | x|x|x|
 
 # Transport
 
