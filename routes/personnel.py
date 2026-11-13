@@ -2,7 +2,7 @@ from fastapi import APIRouter
 from services.personnel import *
 from models.personnel import *
 
-router = APIRouter(prefix="/personnels", tags=["personnels"])
+router = APIRouter(prefix="/personnels", tags=["Personnels"])
 
 @router.get("/")
 def get_personnels():

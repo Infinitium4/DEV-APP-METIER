@@ -1,7 +1,7 @@
 from database import get_connection
 from fastapi import HTTPException
-from personnel import show_personnel
-from role import show_role
+from services.personnel import show_personnel
+from services.role import show_role
 
 
 def show_nettoyages():

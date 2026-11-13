@@ -2,7 +2,7 @@ from fastapi import APIRouter
 from services.reservation import *
 from models.reservation import *
 
-router = APIRouter(prefix="/reservations", tags=["reservations"])
+router = APIRouter(prefix="/reservations", tags=["Reservations"])
 
 @router.get("/")
 def get_reservations():

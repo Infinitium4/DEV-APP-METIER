@@ -2,7 +2,7 @@ from fastapi import APIRouter
 from services.nettoyage import *
 from models.nettoyage import *
 
-router = APIRouter(prefix="/nettoyages", tags=["nettoyages"])
+router = APIRouter(prefix="/nettoyages", tags=["Nettoyages"])
 
 @router.get("/")
 def get_nettoyages():

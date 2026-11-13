@@ -2,7 +2,7 @@ from fastapi import APIRouter
 from services.role import *
 from models.role import *
 
-router = APIRouter(prefix="/roles", tags=["roles"])
+router = APIRouter(prefix="/roles", tags=["Roles"])
 
 @router.get("/")
 def get_roles():

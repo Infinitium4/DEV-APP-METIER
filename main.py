@@ -1,11 +1,22 @@
 from fastapi import FastAPI, Request
 from fastapi.responses import JSONResponse
+from routes.chambre import router as chambre_router
 from routes.client import router as client_router
+from routes.nettoyage import router as nettoyage_router
+from routes.personnel import router as personnel_router
+from routes.reservation import router as reservation_router
+from routes.role import router as role_router
 
 
 app = FastAPI()
 
+app.include_router(chambre_router)
 app.include_router(client_router)
+app.include_router(nettoyage_router)
+app.include_router(personnel_router)
+app.include_router(reservation_router)
+app.include_router(role_router)
+
 
 @app.get("/")
 def accueil():
