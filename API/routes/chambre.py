@@ -1,6 +1,6 @@
 from fastapi import APIRouter
-from services.chambre import *
-from models.chambre import *
+from API.services.chambre import *
+from API.models.chambre import *
 
 router = APIRouter(prefix="/chambres", tags=["Chambres"])
 

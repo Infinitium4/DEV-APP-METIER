@@ -1,6 +1,6 @@
 from fastapi import APIRouter
-from services.client import *
-from models.client import *
+from API.services.client import *
+from API.models.client import *
 
 router = APIRouter(prefix="/clients", tags=["Clients"])
 

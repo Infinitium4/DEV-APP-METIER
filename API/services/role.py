@@ -1,15 +1,15 @@
-from database import get_connection
+from API.database import get_connection
 from fastapi import HTTPException
 
 
-def show_clients():
+def show_roles():
     try:
         connection = get_connection()
         try:
             with connection.cursor() as cursor:
-                cursor.execute("SELECT * FROM client")
-                clients = cursor.fetchall()
-            return clients
+                cursor.execute("SELECT * FROM role")
+                roles = cursor.fetchall()
+            return roles
         finally:
             connection.close()
     except Exception:
@@ -19,16 +19,16 @@ def show_clients():
         )
 
 
-def show_client(client_id: int):
+def show_role(role_id: int):
     try:
         connection = get_connection()
         try:
             with connection.cursor() as cursor:
                 cursor.execute(
-                    "SELECT * FROM client WHERE id = %s",
-                    (client_id,)
+                    "SELECT * FROM role WHERE id = %s",
+                    (role_id,)
                 )
-                client = cursor.fetchone()
+                role = cursor.fetchone()
         finally:
             connection.close()
     except Exception:
@@ -37,23 +37,23 @@ def show_client(client_id: int):
             detail="Erreur de connexion à la BDD"
         )
 
-    if client is None:
+    if role is None:
         raise HTTPException(
             status_code=404,
-            detail="Client introuvable"
+            detail="Role introuvable"
         )
 
-    return client
+    return role
 
 
-def supprimer_client(client_id: int):
+def supprimer_role(role_id: int):
     try:
         connection = get_connection()
         try:
             with connection.cursor() as cursor:
                 cursor.execute(
-                    "DELETE FROM client WHERE id = %s",
-                    (client_id,)
+                    "DELETE FROM role WHERE id = %s",
+                    (role_id,)
                 )
 
                 deleted = cursor.rowcount
@@ -63,10 +63,10 @@ def supprimer_client(client_id: int):
             if deleted == 0:
                 raise HTTPException(
                     status_code=404,
-                    detail="Client introuvable"
+                    detail="Role introuvable"
                 )
 
-            return {"message": "Client supprimé"}
+            return {"message": "Role supprimé"}
 
         finally:
             connection.close()
@@ -81,26 +81,26 @@ def supprimer_client(client_id: int):
         )
 
 
-def insert_client(nom: str,email: str,telephone: str):
+def insert_role(nom: str):
     try:
         connection = get_connection()
         try:
             with connection.cursor() as cursor:
                 cursor.execute(
                     """
-                    INSERT INTO client (nom, email, telephone)
+                    INSERT INTO role (nom)
                     VALUES (%s, %s, %s)
                     """,
-                    (nom, email, telephone)
+                    (nom,)
                 )
 
-                client_id = cursor.lastrowid
+                role_id = cursor.lastrowid
 
             connection.commit()
 
             return {
-                "message": "Client ajouté",
-                "id": client_id
+                "message": "Role ajouté",
+                "id": role_id
             }
 
         finally:
@@ -113,17 +113,17 @@ def insert_client(nom: str,email: str,telephone: str):
         )
 
 
-def update_client(client_id: int, nom: str,email: str,telephone: str):
+def update_role(role_id: int, nom: str):
     try:
         connection = get_connection()
         try:
             with connection.cursor() as cursor:
                 cursor.execute(
                     """
-                    UPDATE client SET nom = %s,email = %s,telephone = %s
+                    UPDATE role SET nom = %s
                     WHERE id = %s
                     """,
-                    (nom, email, telephone, client_id)
+                    (nom, role_id)
                 )
 
                 updated = cursor.rowcount
@@ -133,16 +133,16 @@ def update_client(client_id: int, nom: str,email: str,telephone: str):
             if updated == 0:
                 with connection.cursor() as cursor:
                     cursor.execute(
-                        "SELECT id FROM client WHERE id = %s",
-                        (client_id,)
+                        "SELECT id FROM role WHERE id = %s",
+                        (role_id,)
                     )
                     if cursor.fetchone() is None:
                         raise HTTPException(
                             status_code=404,
-                            detail="Client introuvable"
+                            detail="Role introuvable"
                         )
 
-            return {"message": "Client mis à jour"}
+            return {"message": "Role mis à jour"}
 
         finally:
             connection.close()
@@ -153,5 +153,5 @@ def update_client(client_id: int, nom: str,email: str,telephone: str):
     except Exception:
         raise HTTPException(
             status_code=500,
-            detail="Erreur lors de la modification du client"
+            detail="Erreur lors de la modification du role"
         )
