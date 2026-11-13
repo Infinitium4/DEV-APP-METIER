@@ -5,58 +5,60 @@ Projet pédagogique de gestion d'un hôtel : API Python avec FastAPI et base de 
 ## Structure du projet
 
 ```text
-main.py                Application FastAPI, enregistrement des routeurs et gestion des 404
-database.py            Connexion MariaDB avec PyMySQL
-routes/                Définition des routes HTTP
-services/              Requêtes SQL et gestion des connexions
-models/                Modèles Pydantic pour valider les données reçues
-create_bdd.sql         Création de la base HotelBDD et des tables
-insert_donnees.sql     Données de démonstration
+API/main.py            Application FastAPI et enregistrement des routeurs
+API/database.py        Connexion MariaDB avec PyMySQL
+API/routes/            Définition des routes HTTP
+API/services/          Requêtes SQL et gestion des connexions
+API/models/            Modèles Pydantic des données reçues et renvoyées
+API/securite.py        Hachage des mots de passe et contrôle des JWT
+FRONTEND/              Interface HTML et JavaScript
+BDD/                   Scripts de création et données de démonstration
 docs/                  Documentation du projet
 ```
 
-Seul le module clients est implémenté et son routeur enregistré dans `main.py`. Les fichiers des modules chambres, réservations, personnel, rôles, nettoyages et tours de garde sont actuellement vides.
+Les routeurs clients, chambres, réservations, personnel, rôles, nettoyages et test JWT sont enregistrés. Les limites des modules métier et les tests réalisés sont décrits dans le [rapport de vérification](docs/verification-2026-11-13.md).
 
 ## Installation et lancement
 
 Prérequis : Python avec le module `venv`, MariaDB accessible depuis la machine exécutant l'API et un compte disposant des droits nécessaires.
 
-Ouvrir un terminal dans le dossier contenant `main.py` (le sous-dossier `DEV-APP-METIER` si le terminal se trouve dans le dossier parent).
+Ouvrir un terminal à la racine `DEV-APP-METIER`, qui contient les dossiers `API`, `FRONTEND` et le fichier `.env`.
 
 Sous PowerShell :
 
 ```powershell
 python -m venv .venv
 .\.venv\Scripts\Activate.ps1
-python -m pip install fastapi uvicorn pymysql
-python -m uvicorn main:app --reload
+python -m pip install -r requirements.txt
+python -m uvicorn API.main:app --reload --env-file .env
 ```
 
-Le dépôt ne contient pas encore de fichier de dépendances avec des versions fixées.
+Les dépendances sont listées dans `requirements.txt`, sans versions fixées.
 
-- API : <http://127.0.0.1:8000/>
+- Interface : <http://127.0.0.1:8000/>
+- Connexion de l'API à la BDD : <http://127.0.0.1:8000/api>
 - Documentation interactive Swagger : <http://127.0.0.1:8000/docs>
 - Documentation ReDoc : <http://127.0.0.1:8000/redoc>
 
 ## Base de données
 
-La connexion est configurée directement dans [database.py](database.py).
+La connexion est configurée dans [API/database.py](API/database.py) à partir des variables `DB_HOST`, `DB_PORT`, `DB_NAME`, `DB_USER` et `DB_PASSWORD`, chargées depuis `.env` par la commande de lancement.
 
 | Paramètre | Valeur actuelle |
 | --- | --- |
-| Hôte | `172.16.113.89` |
-| Port | `3306` |
-| Base | `ma_database` |
-| Utilisateur | `admin` |
+| Hôte | `DB_HOST` dans `.env` |
+| Port | `DB_PORT`, par défaut `3306` |
+| Base | `DB_NAME` dans `.env` |
+| Utilisateur | `DB_USER` dans `.env` |
 
-Le mot de passe est également défini dans ce fichier. `pymysql.cursors.DictCursor` renvoie les lignes sous forme de dictionnaires, avec les noms des colonnes comme clés.
+Le mot de passe est lu depuis `DB_PASSWORD`. `pymysql.cursors.DictCursor` renvoie les lignes sous forme de dictionnaires, avec les noms des colonnes comme clés.
 
 Pour initialiser une base de démonstration, exécuter avec un client MariaDB, dans cet ordre :
 
-1. [create_bdd.sql](create_bdd.sql), qui crée `HotelBDD` et ses tables.
-2. [insert_donnees.sql](insert_donnees.sql), qui ajoute les données d'exemple.
+1. [BDD/create_bdd.sql](BDD/create_bdd.sql), qui crée `HotelBDD` et ses tables.
+2. [BDD/insert_donnees.sql](BDD/insert_donnees.sql), qui ajoute les données d'exemple.
 
-**Le nom de base doit être aligné avant utilisation** : les scripts ciblent `HotelBDD`, alors que l'API se connecte à `ma_database`.
+**Les scripts doivent être alignés avant une nouvelle initialisation** : ils ciblent `HotelBDD` et l'ancien champ client `num_tel`, tandis que l'API utilise `DB_NAME` et le champ `telephone`. Ils ne créent pas encore les champs de mots de passe de la base actuelle.
 
 Les tables prévues sont `client`, `chambre`, `role`, `personnel`, `reservation`, `nettoyage` et `tour_de_garde`.
 
@@ -72,14 +74,14 @@ sequenceDiagram
     participant BDD as MariaDB
     HTTP->>Route: GET /clients/
     Route->>Service: show_clients()
-    Service->>BDD: SELECT * FROM client
+    Service->>BDD: SELECT id, nom, prenom, telephone FROM client
     BDD-->>Service: Lignes SQL
     Note over Service,BDD: La connexion est fermée dans finally
     Service-->>Route: Liste de dictionnaires
     Route-->>HTTP: Tableau JSON
 ```
 
-Les modèles [ClientCreate et ClientUpdate](models/client.py) déclarent trois champs obligatoires de type chaîne : `nom`, `email` et `telephone`. Le modèle de mise à jour exige lui aussi les trois champs.
+Les modèles [ClientCreate et ClientUpdate](API/models/client.py) déclarent `nom`, `prenom` et `telephone`. La création exige aussi `mot_de_passe`, haché avant l'insertion. `ClientPublic` limite les réponses à `id`, `nom`, `prenom` et `telephone`, sans mot de passe ni hash.
 
 ### Routes déclarées
 
@@ -87,33 +89,32 @@ Ces routes sont présentes dans le code ; les limites ci-dessous expliquent cell
 
 | Méthode | Route | Comportement prévu |
 | --- | --- | --- |
-| `GET` | `/` | Message d'accueil statique ; ne vérifie pas la connexion à MariaDB. |
+| `GET` | `/` | Interface de liste des clients. |
+| `GET` | `/api` | Ouvre une connexion à MariaDB pour vérifier sa disponibilité. |
 | `GET` | `/clients/` | Liste des clients. |
 | `GET` | `/clients/{client_id}` | Client correspondant à l'identifiant. |
-| `GET` | `/clients/num/{client_id}` | Numéro de téléphone du client, lu dans `num_tel`. |
 | `POST` | `/clients/` | Création d'un client ; statut déclaré `201`. |
 | `PUT` | `/clients/{client_id}` | Modification d'un client. |
-| `DELETE` | `/clients/{id_client}` | Suppression d'un client ; statut déclaré `204`. |
+| `DELETE` | `/clients/{client_id}` | Suppression d'un client ; statut déclaré `204`. |
+| `GET` | `/auth/test` | Vérifie le JWT reçu dans le header `Authorization`. |
 
-Exemple de corps JSON attendu par les routes `POST` et `PUT` :
+Exemple de corps JSON attendu par la route `PUT` ; pour `POST`, ajouter le champ `mot_de_passe` :
 
 ```json
 {
   "nom": "Dupont",
-  "email": "dupont@example.com",
+  "prenom": "Marie",
   "telephone": "0600000001"
 }
 ```
 
-Les services renvoient une erreur HTTP `500` en cas d'échec SQL ou de connexion. Certains cas de client absent déclenchent une erreur `404`. Le gestionnaire global de `main.py` remplace les réponses `404`, y compris celles des services, par un JSON contenant `error`, `message` et `path`, avec le message « La route demandée n'existe pas ».
+Les services renvoient une erreur HTTP `500` en cas d'échec SQL ou de connexion. Certains cas de client absent déclenchent une erreur `404`. Le gestionnaire global de `API/main.py` remplace les réponses `404`, y compris celles des services, par un JSON contenant `error`, `message` et `path`, avec le message « La route demandée n'existe pas ».
 
 ## Limites actuelles
 
-- **Schéma clients incohérent** : le script SQL définit `id`, `num_tel`, `nom` et `prenom`. Les services de création et de modification utilisent `nom`, `email` et `telephone`. Ils ne sont donc pas compatibles avec la table créée par ce script.
-- **Modification** : `update_client()` appelle `updated.commit()` alors que `updated` est un entier provenant de `cursor.rowcount`. Cet appel provoque une erreur ; la transaction devrait être validée sur la connexion.
-- **Suppression** : le chemin déclare `id_client`, mais la fonction attend `client_id`. FastAPI traite donc `client_id` comme un paramètre de requête obligatoire au lieu de récupérer l'identifiant du chemin.
-- **Authentification et permissions** : aucun contrôle d'accès par rôle n'est encore implémenté.
-- **Docker** : le `dockerfile` est vide. Le fichier Compose définit uniquement MariaDB, requiert `DB_PASSWORD` et publie `127.0.0.1:5432:5432`, alors que l'API cible le port MariaDB `3306`. Cette configuration doit être adaptée avant de servir au lancement du projet.
+- **Modules métier** : plusieurs routes chambres et réservations échouent ; des modifications du personnel, des rôles et des nettoyages restent à corriger. Voir les résultats détaillés dans le [rapport de vérification](docs/verification-2026-11-13.md).
+- **Authentification et permissions** : le contrôle JWT de test fonctionne ; la connexion utilisateur et les restrictions par rôle ne sont pas encore implémentées.
+- **Initialisation et Docker** : les scripts SQL restent à aligner sur le schéma actuel. Docker n'a pas été exécuté lors de cette vérification.
 
 ## Documentation complémentaire
 

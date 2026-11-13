@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends
-from securite import exiger_token_valide
+from API.securite import exiger_token_valide
 
 #page d'authentification 
 router = APIRouter(prefix="/auth", tags=["Authentification"])

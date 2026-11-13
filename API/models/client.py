@@ -9,4 +9,4 @@ class ClientCreate(BaseModel):
 class ClientUpdate(BaseModel):
     nom: str
     prenom: str
-    num_tel: str
+    telephone: str
