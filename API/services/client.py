@@ -1,13 +1,13 @@
 from API.database import get_connection
 from fastapi import HTTPException
-from securite import hacher_mot_de_passe
+from API.securite import hacher_mot_de_passe
 
 def show_clients():
     try:
         connection = get_connection()
         try:
             with connection.cursor() as cursor:
-                cursor.execute("SELECT id, nom, prenom, num_tel FROM client")
+                cursor.execute("SELECT id, nom, prenom, telephone FROM client")
                 clients = cursor.fetchall()
             return clients
         finally:
@@ -25,7 +25,7 @@ def show_client(client_id: int):
         try:
             with connection.cursor() as cursor:
                 cursor.execute(
-                    "SELECT id, nom, prenom, num_tel FROM client WHERE id = %s",
+                    "SELECT id, nom, prenom, telephone FROM client WHERE id = %s",
                     (client_id,)
                 )
                 client = cursor.fetchone()
@@ -81,7 +81,7 @@ def supprimer_client(client_id: int):
         )
 
 
-def insert_client(nom: str, prenom: str, num_tel: str, mot_de_passe: str):
+def insert_client(nom: str, prenom: str, telephone: str, mot_de_passe: str):
     mot_de_passe_hash = hacher_mot_de_passe(mot_de_passe)
 
     try:
@@ -91,11 +91,11 @@ def insert_client(nom: str, prenom: str, num_tel: str, mot_de_passe: str):
                 cursor.execute(
                     """
                     INSERT INTO client (
-                        nom, prenom, num_tel, mot_de_passe_hash
+                        nom, prenom, telephone, mot_de_passe_hash
                     )
                     VALUES (%s, %s, %s, %s)
                     """,
-                    (nom, prenom, num_tel, mot_de_passe_hash),
+                    (nom, prenom, telephone, mot_de_passe_hash),
                 )
 
                 client_id = cursor.lastrowid
@@ -117,17 +117,17 @@ def insert_client(nom: str, prenom: str, num_tel: str, mot_de_passe: str):
         )
 
 
-def update_client(client_id: int, nom: str, prenom: str, num_tel: str):
+def update_client(client_id: int, nom: str, prenom: str, telephone: str):
     try:
         connection = get_connection()
         try:
             with connection.cursor() as cursor:
                 cursor.execute(
                     """
-                    UPDATE client SET nom = %s, prenom = %s, num_tel = %s
+                    UPDATE client SET nom = %s, prenom = %s, telephone = %s
                     WHERE id = %s
                     """,
-                    (nom, prenom, num_tel, client_id)
+                    (nom, prenom, telephone, client_id)
                 )
 
                 updated = cursor.rowcount

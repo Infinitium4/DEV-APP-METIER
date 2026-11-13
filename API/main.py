@@ -11,7 +11,7 @@ from API.routes.reservation import router as reservation_router
 from API.routes.role import router as role_router
 from API.database import get_connection
 
-from routes.auth import router as auth_router
+from API.routes.auth import router as auth_router
 
 app = FastAPI()
 

@@ -7,7 +7,7 @@ def show_personnels():
         connection = get_connection()
         try:
             with connection.cursor() as cursor:
-                cursor.execute("SELECT * FROM personnel")
+                cursor.execute("SELECT id, nom, telephone, id_role FROM personnel")
                 personnels = cursor.fetchall()
             return personnels
         finally:
@@ -25,7 +25,7 @@ def show_personnel(personnel_id: int):
         try:
             with connection.cursor() as cursor:
                 cursor.execute(
-                    "SELECT * FROM personnel WHERE id = %s",
+                    "SELECT id, nom, telephone, id_role FROM personnel WHERE id = %s",
                     (personnel_id,)
                 )
                 personnel = cursor.fetchone()
@@ -52,7 +52,7 @@ def show_role_personnel(id_role: int):
         try:
             with connection.cursor() as cursor:
                 cursor.execute(
-                    "SELECT * FROM personnel WHERE id_role = %s",
+                    "SELECT id, nom, telephone, id_role FROM personnel WHERE id_role = %s",
                     (id_role,)
                 )
                 personnel = cursor.fetchone()
