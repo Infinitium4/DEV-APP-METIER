@@ -10,3 +10,9 @@ class PersonnelUpdate(BaseModel):
     nom: str
     telephone: str
     id_role: int
+
+class PersonnelPublic(BaseModel):
+    id: int
+    nom: str
+    prenom: str
+    telephone: str | None

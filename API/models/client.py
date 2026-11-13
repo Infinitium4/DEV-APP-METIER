@@ -10,3 +10,9 @@ class ClientUpdate(BaseModel):
     nom: str
     prenom: str
     telephone: str
+
+class ClientPublic(BaseModel):
+    id: int
+    nom: str
+    prenom: str
+    telephone: str
