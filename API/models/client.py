@@ -8,5 +8,5 @@ class ClientCreate(BaseModel):
 
 class ClientUpdate(BaseModel):
     nom: str
-    email: str
-    telephone: str
+    prenom: str
+    num_tel: str

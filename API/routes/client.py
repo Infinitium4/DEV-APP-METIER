@@ -4,11 +4,11 @@ from API.models.client import *
 
 router = APIRouter(prefix="/clients", tags=["Clients"])
 
-@router.get("/")
+@router.get("/", response_model=list[ClientPublic])
 def get_clients():
     return show_clients()
 
-@router.get("/{client_id}")
+@router.get("/{client_id}", response_model=ClientPublic)
 def get_client(client_id: int):
     return show_client(client_id)
 
@@ -30,6 +30,6 @@ def modifier_client(client_id: int, client: ClientUpdate):
     return update_client(
         client_id,
         client.nom,
-        client.email,
-        client.telephone
+        client.prenom,
+        client.num_tel
     )

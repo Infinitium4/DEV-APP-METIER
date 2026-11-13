@@ -1,13 +1,13 @@
 from API.database import get_connection
 from fastapi import HTTPException
-
+from securite import hacher_mot_de_passe
 
 def show_clients():
     try:
         connection = get_connection()
         try:
             with connection.cursor() as cursor:
-                cursor.execute("SELECT * FROM client")
+                cursor.execute("SELECT id, nom, prenom, num_tel FROM client")
                 clients = cursor.fetchall()
             return clients
         finally:
@@ -25,7 +25,7 @@ def show_client(client_id: int):
         try:
             with connection.cursor() as cursor:
                 cursor.execute(
-                    "SELECT * FROM client WHERE id = %s",
+                    "SELECT id, nom, prenom, num_tel FROM client WHERE id = %s",
                     (client_id,)
                 )
                 client = cursor.fetchone()
@@ -113,22 +113,22 @@ def insert_client(nom: str, email: str, telephone: str, mot_de_passe_hash: str):
         )
 
 
-def update_client(client_id: int, nom: str,email: str,telephone: str):
+def update_client(client_id: int, nom: str, prenom: str, num_tel: str):
     try:
         connection = get_connection()
         try:
             with connection.cursor() as cursor:
                 cursor.execute(
                     """
-                    UPDATE client SET nom = %s,email = %s,telephone = %s
+                    UPDATE client SET nom = %s, prenom = %s, num_tel = %s
                     WHERE id = %s
                     """,
-                    (nom, email, telephone, client_id)
+                    (nom, prenom, num_tel, client_id)
                 )
 
                 updated = cursor.rowcount
 
-            updated.commit()
+            connection.commit()
 
             if updated == 0:
                 with connection.cursor() as cursor:
