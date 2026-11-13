@@ -21,7 +21,8 @@ def create_client(client: ClientCreate):
     return insert_client(
         client.nom,
         client.email,
-        client.telephone
+        client.telephone,
+        client.mot_de_passe_hash
     )
 
 @router.put("/{client_id}")

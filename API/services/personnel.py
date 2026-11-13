@@ -102,17 +102,17 @@ def supprimer_personnel(personnel_id: int):
         )
 
 
-def insert_personnel(nom: str,telephone: str, id_role: int):
+def insert_personnel(nom: str,telephone: str, id_role: int, mot_de_passe_hash: str):
     try:
         connection = get_connection()
         try:
             with connection.cursor() as cursor:
                 cursor.execute(
                     """
-                    INSERT INTO personnel (nom, telephone, id_role)
-                    VALUES (%s, %s, %s)
+                    INSERT INTO personnel (nom, telephone, id_role, mot_de_passe_hash)
+                    VALUES (%s, %s, %s, %s)
                     """,
-                    (nom, telephone, id_role)
+                    (nom, telephone, id_role, mot_de_passe_hash)
                 )
 
                 personnel_id = cursor.lastrowid

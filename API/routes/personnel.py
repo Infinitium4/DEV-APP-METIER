@@ -26,7 +26,8 @@ def create_personnel(personnel: PersonnelCreate):
     return insert_personnel(
         personnel.nom,
         personnel.telephone,
-        personnel.id_role
+        personnel.id_role,
+        personnel.mot_de_passe_hash
     )
 
 @router.put("/{personnel_id}")

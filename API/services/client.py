@@ -81,17 +81,17 @@ def supprimer_client(client_id: int):
         )
 
 
-def insert_client(nom: str,email: str,telephone: str):
+def insert_client(nom: str, email: str, telephone: str, mot_de_passe_hash: str):
     try:
         connection = get_connection()
         try:
             with connection.cursor() as cursor:
                 cursor.execute(
                     """
-                    INSERT INTO client (nom, email, telephone)
-                    VALUES (%s, %s, %s)
+                    INSERT INTO client (nom, email, telephone, mot_de_passe_hash)
+                    VALUES (%s, %s, %s, %s)
                     """,
-                    (nom, email, telephone)
+                    (nom, email, telephone, mot_de_passe_hash)
                 )
 
                 client_id = cursor.lastrowid
