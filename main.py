@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, Request, HTTPException
 from fastapi.responses import JSONResponse
 from routes.chambre import router as chambre_router
 from routes.client import router as client_router
@@ -6,6 +6,7 @@ from routes.nettoyage import router as nettoyage_router
 from routes.personnel import router as personnel_router
 from routes.reservation import router as reservation_router
 from routes.role import router as role_router
+from database import get_connection
 
 
 app = FastAPI()
@@ -20,7 +21,19 @@ app.include_router(role_router)
 
 @app.get("/")
 def accueil():
-    return {"message": "API connectée à MariaDB"}
+    connection = None
+    try:
+        connection = get_connection()
+        return {"message": "API connectée à MariaDB"}
+
+    except Exception:
+        raise HTTPException(
+            status_code=500,
+            detail="Erreur de connexion à la BDD"
+        )
+    finally:
+        if connection is not None:
+            connection.close()
 
 @app.exception_handler(404)
 async def not_found(request: Request, exc):
