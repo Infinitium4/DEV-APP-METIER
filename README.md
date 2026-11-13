@@ -69,8 +69,8 @@ Les insertions utilisent `INSERT IGNORE` et des identifiants fixes : une ligne d
 ```mermaid
 sequenceDiagram
     participant HTTP as Client HTTP
-    participant Route as routes/client.py
-    participant Service as services/client.py
+    participant Route as API/routes/client.py
+    participant Service as API/services/client.py
     participant BDD as MariaDB
     HTTP->>Route: GET /clients/
     Route->>Service: show_clients()
