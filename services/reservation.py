@@ -82,7 +82,7 @@ def show_reservation_client(id_client: int):
                     "SELECT * FROM reservation WHERE id_client = %s",
                     (id_client,)
                 )
-                reservation_client = cursor.fetchone()
+                reservation_client = cursor.fetchall()
             return reservation_client
         finally:
             connection.close()
@@ -102,7 +102,7 @@ def show_reservation_chambre(id_chambre: int):
                     "SELECT * FROM reservation WHERE id_chambre = %s",
                     (id_chambre,)
                 )
-                reservation_chambre = cursor.fetchone()
+                reservation_chambre = cursor.fetchall()
             return reservation_chambre
         finally:
             connection.close()
