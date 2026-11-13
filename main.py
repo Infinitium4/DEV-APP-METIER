@@ -13,7 +13,7 @@ from database import get_connection
 
 
 app = FastAPI()
-app.mount("/frontend", StaticFiles(directory=Path(__file__).resolve().parent / "frontend", html=True), name="frontend")
+app.mount("/", StaticFiles(directory=Path(__file__).resolve().parent / "frontend", html=True), name="frontend")
 
 app.include_router(chambre_router)
 app.include_router(client_router)
@@ -23,7 +23,7 @@ app.include_router(reservation_router)
 app.include_router(role_router)
 
 
-@app.get("/")
+@app.get("/api")
 def accueil():
     connection = None
     try:

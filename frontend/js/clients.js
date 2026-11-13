@@ -14,6 +14,7 @@ async function chargerClients() {
             const element = document.createElement("li");
             element.className = "list-group-item";
             element.textContent = client.nom;
+            element.textContent = client.prenom;
 
             liste.append(element);
         }
