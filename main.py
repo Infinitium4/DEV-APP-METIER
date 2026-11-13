@@ -1,4 +1,7 @@
+from pathlib import Path
+
 from fastapi import FastAPI, Request, HTTPException
+from fastapi.staticfiles import StaticFiles
 from fastapi.responses import JSONResponse
 from routes.chambre import router as chambre_router
 from routes.client import router as client_router
@@ -10,6 +13,7 @@ from database import get_connection
 
 
 app = FastAPI()
+app.mount("/frontend", StaticFiles(directory=Path(__file__).resolve().parent / "frontend", html=True), name="frontend")
 
 app.include_router(chambre_router)
 app.include_router(client_router)

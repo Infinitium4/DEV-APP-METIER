@@ -117,5 +117,6 @@ Les services renvoient une erreur HTTP `500` en cas d'échec SQL ou de connexion
 
 ## Documentation complémentaire
 
+- [Comprendre le fonctionnement de l’API](docs/fonctionnement-api.md)
 - [Schéma UML hôtel-casino](docs/uml-hotel-casino.md)
 - [Proposition de contrôle d'accès par rôle](docs/acces-par-role.md)
