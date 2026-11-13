@@ -1,7 +1,7 @@
-from database import get_connection
+from API.database import get_connection
 from fastapi import HTTPException
-from services.personnel import show_personnel
-from services.role import show_role
+from API.services.personnel import show_personnel
+from API.services.role import show_role
 
 
 def show_nettoyages():

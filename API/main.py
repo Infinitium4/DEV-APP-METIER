@@ -3,13 +3,13 @@ from pathlib import Path
 from fastapi import FastAPI, Request, HTTPException
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import JSONResponse
-from routes.chambre import router as chambre_router
-from routes.client import router as client_router
-from routes.nettoyage import router as nettoyage_router
-from routes.personnel import router as personnel_router
-from routes.reservation import router as reservation_router
-from routes.role import router as role_router
-from database import get_connection
+from API.routes.chambre import router as chambre_router
+from API.routes.client import router as client_router
+from API.routes.nettoyage import router as nettoyage_router
+from API.routes.personnel import router as personnel_router
+from API.routes.reservation import router as reservation_router
+from API.routes.role import router as role_router
+from API.database import get_connection
 
 from routes.auth import router as auth_router
 
@@ -51,4 +51,4 @@ async def not_found(request: Request, exc):
         }
     )
 
-app.mount("/", StaticFiles(directory=Path(__file__).resolve().parent / "frontend", html=True), name="frontend")
+app.mount("/", StaticFiles(directory=Path(__file__).resolve().parent.parent / "FRONTEND", html=True), name="frontend")

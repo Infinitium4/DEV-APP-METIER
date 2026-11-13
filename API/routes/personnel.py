@@ -1,6 +1,6 @@
 from fastapi import APIRouter
-from services.personnel import *
-from models.personnel import *
+from API.services.personnel import *
+from API.models.personnel import *
 
 router = APIRouter(prefix="/personnels", tags=["Personnels"])
 

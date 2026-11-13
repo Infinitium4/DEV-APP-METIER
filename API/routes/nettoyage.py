@@ -1,6 +1,6 @@
 from fastapi import APIRouter
-from services.nettoyage import *
-from models.nettoyage import *
+from API.services.nettoyage import *
+from API.models.nettoyage import *
 
 router = APIRouter(prefix="/nettoyages", tags=["Nettoyages"])
 

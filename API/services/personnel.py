@@ -1,4 +1,4 @@
-from database import get_connection
+from API.database import get_connection
 from fastapi import HTTPException
 
 

@@ -1,15 +1,15 @@
-from database import get_connection
+from API.database import get_connection
 from fastapi import HTTPException
+from securite import hacher_mot_de_passe
 
-
-def show_roles():
+def show_clients():
     try:
         connection = get_connection()
         try:
             with connection.cursor() as cursor:
-                cursor.execute("SELECT * FROM role")
-                roles = cursor.fetchall()
-            return roles
+                cursor.execute("SELECT id, nom, prenom, num_tel FROM client")
+                clients = cursor.fetchall()
+            return clients
         finally:
             connection.close()
     except Exception:
@@ -19,16 +19,16 @@ def show_roles():
         )
 
 
-def show_role(role_id: int):
+def show_client(client_id: int):
     try:
         connection = get_connection()
         try:
             with connection.cursor() as cursor:
                 cursor.execute(
-                    "SELECT * FROM role WHERE id = %s",
-                    (role_id,)
+                    "SELECT id, nom, prenom, num_tel FROM client WHERE id = %s",
+                    (client_id,)
                 )
-                role = cursor.fetchone()
+                client = cursor.fetchone()
         finally:
             connection.close()
     except Exception:
@@ -37,23 +37,23 @@ def show_role(role_id: int):
             detail="Erreur de connexion à la BDD"
         )
 
-    if role is None:
+    if client is None:
         raise HTTPException(
             status_code=404,
-            detail="Role introuvable"
+            detail="Client introuvable"
         )
 
-    return role
+    return client
 
 
-def supprimer_role(role_id: int):
+def supprimer_client(client_id: int):
     try:
         connection = get_connection()
         try:
             with connection.cursor() as cursor:
                 cursor.execute(
-                    "DELETE FROM role WHERE id = %s",
-                    (role_id,)
+                    "DELETE FROM client WHERE id = %s",
+                    (client_id,)
                 )
 
                 deleted = cursor.rowcount
@@ -63,10 +63,10 @@ def supprimer_role(role_id: int):
             if deleted == 0:
                 raise HTTPException(
                     status_code=404,
-                    detail="Role introuvable"
+                    detail="Client introuvable"
                 )
 
-            return {"message": "Role supprimé"}
+            return {"message": "Client supprimé"}
 
         finally:
             connection.close()
@@ -81,26 +81,30 @@ def supprimer_role(role_id: int):
         )
 
 
-def insert_role(nom: str):
+def insert_client(nom: str, prenom: str, num_tel: str, mot_de_passe: str):
+    mot_de_passe_hash = hacher_mot_de_passe(mot_de_passe)
+
     try:
         connection = get_connection()
         try:
             with connection.cursor() as cursor:
                 cursor.execute(
                     """
-                    INSERT INTO role (nom)
-                    VALUES (%s, %s, %s)
+                    INSERT INTO client (
+                        nom, prenom, num_tel, mot_de_passe_hash
+                    )
+                    VALUES (%s, %s, %s, %s)
                     """,
-                    (nom,)
+                    (nom, prenom, num_tel, mot_de_passe_hash),
                 )
 
-                role_id = cursor.lastrowid
+                client_id = cursor.lastrowid
 
             connection.commit()
 
             return {
-                "message": "Role ajouté",
-                "id": role_id
+                "message": "Client ajouté",
+                "id": client_id
             }
 
         finally:
@@ -113,36 +117,36 @@ def insert_role(nom: str):
         )
 
 
-def update_role(role_id: int, nom: str):
+def update_client(client_id: int, nom: str, prenom: str, num_tel: str):
     try:
         connection = get_connection()
         try:
             with connection.cursor() as cursor:
                 cursor.execute(
                     """
-                    UPDATE role SET nom = %s
+                    UPDATE client SET nom = %s, prenom = %s, num_tel = %s
                     WHERE id = %s
                     """,
-                    (nom, role_id)
+                    (nom, prenom, num_tel, client_id)
                 )
 
                 updated = cursor.rowcount
 
-            updated.commit()
+            connection.commit()
 
             if updated == 0:
                 with connection.cursor() as cursor:
                     cursor.execute(
-                        "SELECT id FROM role WHERE id = %s",
-                        (role_id,)
+                        "SELECT id FROM client WHERE id = %s",
+                        (client_id,)
                     )
                     if cursor.fetchone() is None:
                         raise HTTPException(
                             status_code=404,
-                            detail="Role introuvable"
+                            detail="Client introuvable"
                         )
 
-            return {"message": "Role mis à jour"}
+            return {"message": "Client mis à jour"}
 
         finally:
             connection.close()
@@ -153,5 +157,5 @@ def update_role(role_id: int, nom: str):
     except Exception:
         raise HTTPException(
             status_code=500,
-            detail="Erreur lors de la modification du role"
+            detail="Erreur lors de la modification du client"
         )

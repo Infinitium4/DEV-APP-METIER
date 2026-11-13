@@ -1,6 +1,6 @@
 from fastapi import APIRouter
-from services.reservation import *
-from models.reservation import *
+from API.services.reservation import *
+from API.models.reservation import *
 
 router = APIRouter(prefix="/reservations", tags=["Reservations"])
 

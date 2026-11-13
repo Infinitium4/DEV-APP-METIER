@@ -1,6 +1,6 @@
 from fastapi import APIRouter
-from services.role import *
-from models.role import *
+from API.services.role import *
+from API.models.role import *
 
 router = APIRouter(prefix="/roles", tags=["Roles"])
 
