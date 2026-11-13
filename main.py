@@ -13,7 +13,7 @@ from database import get_connection
 
 
 app = FastAPI()
-app.mount("/", StaticFiles(directory=Path(__file__).resolve().parent / "frontend", html=True), name="frontend")
+
 
 app.include_router(chambre_router)
 app.include_router(client_router)
@@ -49,3 +49,5 @@ async def not_found(request: Request, exc):
             "path": request.url.path
         }
     )
+
+app.mount("/", StaticFiles(directory=Path(__file__).resolve().parent / "frontend", html=True), name="frontend")
