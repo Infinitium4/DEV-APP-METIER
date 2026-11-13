@@ -73,6 +73,46 @@ def show_reservation_dates(reservation_id: int):
     return reservation_dates
 
 
+def show_reservation_client(id_client: int):
+    try:
+        connection = get_connection()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "SELECT * FROM reservation WHERE id_client = %s",
+                    (id_client,)
+                )
+                reservation_client = cursor.fetchone()
+            return reservation_client
+        finally:
+            connection.close()
+    except Exception:
+        raise HTTPException(
+            status_code=500,
+            detail="Erreur de connexion à la BDD"
+        )
+    
+
+def show_reservation_chambre(id_chambre: int):
+    try:
+        connection = get_connection()
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute(
+                    "SELECT * FROM reservation WHERE id_chambre = %s",
+                    (id_chambre,)
+                )
+                reservation_chambre = cursor.fetchone()
+            return reservation_chambre
+        finally:
+            connection.close()
+    except Exception:
+        raise HTTPException(
+            status_code=500,
+            detail="Erreur de connexion à la BDD"
+        )
+
+
 def supprimer_reservation(reservation_id: int):
     try:
         connection = get_connection()
