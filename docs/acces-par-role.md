@@ -109,7 +109,7 @@ Un accès autorisé permet d'exécuter le service ; il ne garantit pas que la re
 
 ## Où placer le contrôle dans FastAPI ?
 
-Pour la route clients du projet, le contrôle se placerait avant l'appel à `show_clients()` dans [routes/client.py](../routes/client.py).
+Pour la route clients du projet, le contrôle se placerait avant l'appel à `show_clients()` dans [API/routes/client.py](../API/routes/client.py).
 
 Une dépendance FastAPI avec `Depends` peut regrouper la vérification de l'utilisateur et de ses permissions. Les routes protégées utilisent cette dépendance pour éviter de répéter les contrôles.
 
