@@ -11,6 +11,7 @@ from routes.reservation import router as reservation_router
 from routes.role import router as role_router
 from database import get_connection
 
+from routes.auth import router as auth_router
 
 app = FastAPI()
 
@@ -21,7 +22,7 @@ app.include_router(nettoyage_router)
 app.include_router(personnel_router)
 app.include_router(reservation_router)
 app.include_router(role_router)
-
+app.include_router(auth_router)
 
 @app.get("/api")
 def accueil():

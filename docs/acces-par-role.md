@@ -1,6 +1,6 @@
 # Contrôle d'accès aux routes par rôle
 
-Ce document explique le fonctionnement proposé pour l'API FastAPI du projet. Il décrit le mécanisme ; il ne signifie pas que l'authentification et les permissions sont déjà implémentées.
+Ce document explique le contrôle d'accès de l'API FastAPI du projet. Le code contient les fonctions de hachage et de JWT, la dépendance de vérification du token et la route de test `/auth/test`. La connexion aux comptes en BDD et les permissions métier restent à brancher. La présence du code ne remplace pas un test de l'API en fonctionnement.
 
 ## À quoi sert un header ?
 
@@ -42,6 +42,57 @@ flowchart TD
     F --> G[Interroger MariaDB sur la VM]
     G --> H[Renvoyer le résultat en JSON]
 ```
+
+## Schéma détaillé : du token à la route
+
+Ce premier schéma décrit le test `GET /auth/test`, qui fonctionne sans BDD. Le token de test est créé en Python avec **la même clé secrète que celle configurée dans l'API**. `client:12` est une identité fictive utilisée pour expliquer le parcours.
+
+Au démarrage, `--env-file .env` charge la configuration et `app.include_router(auth_router)` enregistre la route. Ces opérations préparent l'API avant les requêtes.
+
+```mermaid
+flowchart TD
+    A["Python : creer_token avec la clé du serveur"] --> B["JWT contenant sub = client:12 et une expiration"]
+    B --> C["Requête GET /auth/test avec Authorization: Bearer token"]
+    C --> D["FastAPI résout Depends et HTTPBearer extrait le token"]
+    D --> E["exiger_token_valide reçoit autorisation"]
+    E --> F{"Token Bearer présent ?"}
+    F -- Non --> R["401 : authentification refusée"]
+    F -- Oui --> G["os.getenv lit JWT_SECRET_KEY côté serveur"]
+    G --> H{"Clé serveur configurée ?"}
+    H -- Non --> S["503 : configuration JWT manquante"]
+    H -- Oui --> I["verifier_token contrôle signature, expiration et champs requis"]
+    I --> J{"JWT accepté ?"}
+    J -- Non --> R
+    J -- Oui --> K["La fonction renvoie le dictionnaire vérifié"]
+    K --> L["Depends place ce résultat dans donnees"]
+    L --> M["La fonction tester_token est exécutée"]
+    M --> N["200 OK : identite = client:12"]
+```
+
+### Comment lire le schéma
+
+- **Le header transporte le token.** Le client joint `Authorization: Bearer token` à sa requête.
+- **HTTPBearer extrait sa valeur.** FastAPI résout cette dépendance avant d'appeler `exiger_token_valide`.
+- **La clé reste sur le serveur.** Elle sert à signer le token lors de sa création, puis à vérifier sa signature. Elle n'est pas envoyée dans le header.
+- **Une erreur arrête la requête.** Si le header est absent ou incorrect, ou si le JWT est invalide ou expiré, la réponse est `401` et la fonction de la route n'est pas exécutée. Une clé serveur absente produit `503`.
+- **Depends transmet le résultat.** Après validation, le dictionnaire renvoyé par `exiger_token_valide` devient la valeur de `donnees` dans `tester_token`.
+- **La route répond avec l'identité.** Elle lit `donnees["sub"]` et renvoie, pour cet exemple, `{"identite": "client:12"}`.
+
+### Connexion réelle : étape à brancher sur la BDD
+
+Le test précédent crée le token manuellement. Lors de la future connexion, sa création sera conditionnée par la vérification du compte et de son mot de passe :
+
+```mermaid
+flowchart TD
+    A["Identifiant et mot de passe saisis"] --> B["Retrouver le compte dans client ou personnel"]
+    B --> C{"Compte trouvé et mot de passe correct ?"}
+    C -- Non --> D["401 : connexion refusée"]
+    C -- Oui --> E["creer_token signe le JWT"]
+    E --> F["Le client reçoit le token"]
+    F --> G["Il peut suivre le parcours du premier schéma"]
+```
+
+Pour les routes métier, il faudra ensuite retrouver le compte à partir du JWT vérifié, contrôler qu'il peut encore se connecter et vérifier ses permissions **avant d'exécuter le service métier**. Un compte authentifié sans la permission requise recevra `403`. Un JWT valide ne prouve pas à lui seul que le compte existe encore ni qu'il possède tous les droits.
 
 ## Exemple pour GET /clients/
 
