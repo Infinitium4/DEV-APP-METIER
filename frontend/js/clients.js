@@ -13,8 +13,8 @@ async function chargerClients() {
         for (const client of clients) {
             const element = document.createElement("li");
             element.className = "list-group-item";
-            element.textContent = client.nom;
-            element.textContent = client.prenom;
+            element.textContent = `${client.nom} ${client.prenom}`;
+            
 
             liste.append(element);
         }
@@ -39,9 +39,10 @@ async function ajouterClients() {
                 "Content-Type": "application/json",
             },
             body: JSON.stringify({
-                nom: "Dupont",
-                email: "dupont@example.com",
-                telephone: "0600000001",
+                nom: document.querySelector("#nom").value,
+                prenom: document.querySelector('#prenom').value,
+                email: document.querySelector("#email").value,
+                telephone: document.querySelector("#telephone").value,
             }),
         });
 
