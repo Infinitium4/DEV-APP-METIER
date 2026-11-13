@@ -1,3 +1,5 @@
 fastapi
 uvicorn
 pymysql
+pyjwt
+pwdlib[argon2]
