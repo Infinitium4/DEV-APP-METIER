@@ -1,14 +1,18 @@
 services:
   api:
     build: .
+    restart: unless-stopped
     ports:
       - "8000:8000"
     environment:
-      DB_HOST: ${DB_HOST}
-      DB_PORT: ${DB_PORT:-3306}
+      DB_HOST: db
+      DB_PORT: 3306
       DB_NAME: ${DB_NAME}
       DB_USER: ${DB_USER}
       DB_PASSWORD: ${DB_PASSWORD}
+    depends_on:
+      db:
+        condition: service_healthy
       
   db:
     image: mariadb:11.8
@@ -22,7 +26,7 @@ services:
       MYSQL_PASSWORD: ${DB_PASSWORD}
 
     ports:
-      - "127.0.0.1:5432:5432"
+      - "127.0.0.1:3306:3306"
 
     volumes:
       - mariadb_data:/var/lib/mysql
