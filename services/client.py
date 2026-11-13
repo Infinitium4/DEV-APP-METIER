@@ -46,33 +46,6 @@ def show_client(client_id: int):
     return client
 
 
-def show_client_num(client_id: int):
-    try:
-        connection = get_connection()
-        try:
-            with connection.cursor() as cursor:
-                cursor.execute(
-                    "SELECT num_tel FROM client WHERE id = %s",
-                    (client_id,)
-                )
-                client_num = cursor.fetchone()
-        finally:
-            connection.close()
-    except Exception:
-        raise HTTPException(
-            status_code=500,
-            detail="Erreur de connexion à la BDD"
-        )
-
-    if client_num is None:
-        raise HTTPException(
-            status_code=404,
-            detail="Client introuvable ou sans numéro"
-        )
-
-    return client_num
-
-
 def supprimer_client(client_id: int):
     try:
         connection = get_connection()

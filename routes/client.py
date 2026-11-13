@@ -12,10 +12,6 @@ def get_clients():
 def get_client(client_id: int):
     return show_client(client_id)
 
-@router.get("/num/{client_id}")
-def get_client_num(client_id: int):
-    return show_client_num(client_id)
-
 @router.delete("/{id_client}", status_code=204)
 def delete_client(client_id: int):
     return supprimer_client(client_id)
