@@ -16,16 +16,16 @@ def get_nettoyage(nettoyage_id: int):
 def get_nettoyage_num(nettoyage_id: int):
     return show_nettoyage_dates(nettoyage_id)
 
-@router.get("/personnel/{personnel_id}")
-def get_nettoyage_client(personnel_id: int):
-    return show_nettoyage_personnel(personnel_id)
+@router.get("/personnel/{id_personnel}")
+def get_nettoyage_client(id_personnel: int):
+    return show_nettoyage_personnel(id_personnel)
 
-@router.get("/chambre/{chambre_id}")
-def get_nettoyage_chambre(chambre_id: int):
-    return show_nettoyage_chambre(chambre_id)
+@router.get("/chambre/{id_chambre}")
+def get_nettoyage_chambre(id_chambre: int):
+    return show_nettoyage_chambre(id_chambre)
 
 
-@router.delete("/{id_nettoyage}", status_code=204)
+@router.delete("/{nettoyage_id}", status_code=204)
 def delete_nettoyage(nettoyage_id: int):
     return supprimer_nettoyage(nettoyage_id)
 
@@ -33,7 +33,6 @@ def delete_nettoyage(nettoyage_id: int):
 def create_nettoyage(nettoyage: NettoyageCreate):
     return insert_nettoyage(
         nettoyage.date_debut,
-        nettoyage.date_fin,
         nettoyage.id_chambre,
         nettoyage.id_personnel
     )
@@ -42,8 +41,6 @@ def create_nettoyage(nettoyage: NettoyageCreate):
 def modifier_nettoyage(nettoyage_id: int, nettoyage: NettoyageUpdate):
     return update_nettoyage(
         nettoyage_id,
-        nettoyage.date_debut,
         nettoyage.date_fin,
-        nettoyage.id_chambre,
         nettoyage.id_personnel
     )

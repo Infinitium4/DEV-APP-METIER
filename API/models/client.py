@@ -2,9 +2,9 @@ from pydantic import BaseModel
 
 class ClientCreate(BaseModel):
     nom: str
-    email: str
+    prenom: str
     telephone: str
-    mot_de_passe_hash: str
+    mot_de_passe: str
 
 class ClientUpdate(BaseModel):
     nom: str

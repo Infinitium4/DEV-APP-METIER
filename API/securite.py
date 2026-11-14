@@ -16,10 +16,7 @@ def hacher_mot_de_passe(mot_de_passe: str) -> str:
     return gestionnaire.hash(mot_de_passe)
 
 #Vérifie si le mdp est valide à la connexion
-def verifier_mot_de_passe(
-    mot_de_passe: str,
-    hash_stocke: str | None,
-) -> bool:
+def verifier_mot_de_passe(mot_de_passe: str, hash_stocke: str | None,) -> bool:
     if not hash_stocke:
         return False
 
@@ -30,11 +27,7 @@ def verifier_mot_de_passe(
 
 
 #On créé le tocken pour l'utilisateur si il a bien le role valide 
-def creer_token(
-    id_utilisateur: int,
-    type_utilisateur: str,
-    cle_secrete: str,
-) -> str:
+def creer_token(id_utilisateur: int, type_utilisateur: str,cle_secrete: str,) -> str:
     if type_utilisateur not in ("client", "personnel"):
         raise ValueError("Type utilisateur invalide")
 

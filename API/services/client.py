@@ -1,6 +1,5 @@
 from API.database import get_connection
 from fastapi import HTTPException
-from API.securite import hacher_mot_de_passe
 
 def show_clients():
     try:
@@ -81,17 +80,18 @@ def supprimer_client(client_id: int):
         )
 
 
-def insert_client(nom: str, email: str, telephone: str, mot_de_passe_hash: str):
+def insert_client(nom: str, prenom: str, telephone: str, mot_de_passe_hash: str):
     try:
         connection = get_connection()
         try:
+
             with connection.cursor() as cursor:
                 cursor.execute(
                     """
-                    INSERT INTO client (nom, email, telephone, mot_de_passe_hash)
+                    INSERT INTO client (nom, prenom, telephone, mot_de_passe_hash)
                     VALUES (%s, %s, %s, %s)
                     """,
-                    (nom, email, telephone, mot_de_passe_hash)
+                    (nom, prenom, telephone, mot_de_passe_hash)
                 )
 
                 client_id = cursor.lastrowid

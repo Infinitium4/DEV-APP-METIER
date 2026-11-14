@@ -16,16 +16,16 @@ def get_reservation(reservation_id: int):
 def get_reservation_num(reservation_id: int):
     return show_reservation_dates(reservation_id)
 
-@router.get("/client/{client_id}")
-def get_reservation_client(client_id: int):
-    return show_reservation_client(client_id)
+@router.get("/client/{id_client}")
+def get_reservation_client(id_client: int):
+    return show_reservation_client(id_client)
 
-@router.get("/chambre/{chambre_id}")
-def get_reservation_chambre(chambre_id: int):
-    return show_reservation_chambre(chambre_id)
+@router.get("/chambre/{id_chambre}")
+def get_reservation_chambre(id_chambre: int):
+    return show_reservation_chambre(id_chambre)
 
 
-@router.delete("/{id_reservation}", status_code=204)
+@router.delete("/{reservation_id}", status_code=204)
 def delete_reservation(reservation_id: int):
     return supprimer_reservation(reservation_id)
 

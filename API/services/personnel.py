@@ -55,7 +55,7 @@ def show_role_personnel(id_role: int):
                     "SELECT id, nom, telephone, id_role FROM personnel WHERE id_role = %s",
                     (id_role,)
                 )
-                personnel = cursor.fetchone()
+                personnel = cursor.fetchall()
             return personnel
         finally:
             connection.close()
@@ -149,7 +149,7 @@ def update_personnel(personnel_id: int, nom: str, telephone: str, id_role: int):
 
                 updated = cursor.rowcount
 
-            updated.commit()
+            connection.commit()
 
             if updated == 0:
                 with connection.cursor() as cursor:

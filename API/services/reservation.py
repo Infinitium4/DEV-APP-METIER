@@ -195,7 +195,7 @@ def update_reservation(reservation_id: int, date_debut: str, date_fin: str, nb_p
 
                 updated = cursor.rowcount
 
-            updated.commit()
+            connection.commit()
 
             if updated == 0:
                 with connection.cursor() as cursor:

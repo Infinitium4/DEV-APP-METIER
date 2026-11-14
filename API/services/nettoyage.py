@@ -153,9 +153,9 @@ def supprimer_nettoyage(nettoyage_id: int):
 
 def insert_nettoyage(date_debut: str, id_chambre: int, id_personnel: int):
     personnel = show_personnel(id_personnel)
-    role = show_role(personnel["role"])
+    role = show_role(personnel["id_role"])
 
-    if role=="entretien":
+    if role["nom"].lower() == "entretien":
         try:
             connection = get_connection()
             try:
@@ -187,45 +187,49 @@ def insert_nettoyage(date_debut: str, id_chambre: int, id_personnel: int):
             )
 
 
-def update_nettoyage(nettoyage_id: int, date_fin: str):
-    try:
-        connection = get_connection()
+def update_nettoyage(nettoyage_id: int, date_fin: str, id_personnel: int):
+    personnel = show_personnel(id_personnel)
+    role = show_role(personnel["id_role"])
+
+    if role["nom"].lower() == "entretien":
         try:
-            with connection.cursor() as cursor:
-                cursor.execute(
-                    """
-                    UPDATE nettoyage SET date_fin = %s
-                    WHERE id = %s
-                    """,
-                    (date_fin, nettoyage_id)
-                )
-
-                updated = cursor.rowcount
-
-            updated.commit()
-
-            if updated == 0:
+            connection = get_connection()
+            try:
                 with connection.cursor() as cursor:
                     cursor.execute(
-                        "SELECT id FROM nettoyage WHERE id = %s",
-                        (nettoyage_id,)
+                        """
+                        UPDATE nettoyage SET date_fin = %s
+                        WHERE id = %s
+                        """,
+                        (date_fin, nettoyage_id)
                     )
-                    if cursor.fetchone() is None:
-                        raise HTTPException(
-                            status_code=404,
-                            detail="Nettoyage introuvable"
+
+                    updated = cursor.rowcount
+
+                connection.commit()
+
+                if updated == 0:
+                    with connection.cursor() as cursor:
+                        cursor.execute(
+                            "SELECT id FROM nettoyage WHERE id = %s",
+                            (nettoyage_id,)
                         )
+                        if cursor.fetchone() is None:
+                            raise HTTPException(
+                                status_code=404,
+                                detail="Nettoyage introuvable"
+                            )
 
-            return {"message": "Nettoyage mis à jour"}
+                return {"message": "Nettoyage mis à jour"}
 
-        finally:
-            connection.close()
+            finally:
+                connection.close()
 
-    except HTTPException:
-        raise
+        except HTTPException:
+            raise
 
-    except Exception:
-        raise HTTPException(
-            status_code=500,
-            detail="Erreur lors de la modification du nettoyage"
-        )
+        except Exception:
+            raise HTTPException(
+                status_code=500,
+                detail="Erreur lors de la modification du nettoyage"
+            )

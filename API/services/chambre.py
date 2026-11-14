@@ -52,7 +52,7 @@ def show_chambres_sales():
         try:
             with connection.cursor() as cursor:
                 cursor.execute(
-                    "SELECT numero, nb_lit FROM chambre WHERE propre=FALSE"
+                    "SELECT id, nb_lit FROM chambre WHERE propre=FALSE"
                 )
                 chambres_sales = cursor.fetchall()
             return chambres_sales
@@ -98,7 +98,7 @@ def show_chambres_libres():
         try:
             with connection.cursor() as cursor:
                 cursor.execute(
-                    "SELECT numero, nb_lit FROM chambre WHERE reserve=FALSE"
+                    "SELECT id, nb_lit FROM chambre WHERE reserve=FALSE"
                 )
                 chambres_libres = cursor.fetchall()
             return chambres_libres
@@ -144,7 +144,7 @@ def show_chambre_reservable():
         try:
             with connection.cursor() as cursor:
                 cursor.execute(
-                    "SELECT numero, nb_lit FROM chambre WHERE reserve=FALSE AND propre=TRUE"
+                    "SELECT id, nb_lit FROM chambre WHERE reserve=FALSE AND propre=TRUE"
                 )
                 chambres_reservables = cursor.fetchall()
             return chambres_reservables
@@ -240,7 +240,7 @@ def update_chambre_proprete(chambre_id: int, propre: bool):
 
                 updated = cursor.rowcount
 
-            updated.commit()
+            connection.commit()
 
             if updated == 0:
                 with connection.cursor() as cursor:
@@ -284,7 +284,7 @@ def update_chambre_reserve(chambre_id: int, reserve: bool):
 
                 updated = cursor.rowcount
 
-            updated.commit()
+            connection.commit()
 
             if updated == 0:
                 with connection.cursor() as cursor:
@@ -328,7 +328,7 @@ def update_chambre(chambre_id: int, nb_lit: int):
 
                 updated = cursor.rowcount
 
-            updated.commit()
+            connection.commit()
 
             if updated == 0:
                 with connection.cursor() as cursor:

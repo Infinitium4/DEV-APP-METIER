@@ -1,6 +1,8 @@
 from fastapi import APIRouter
 from API.services.client import *
 from API.models.client import *
+from API.securite import hacher_mot_de_passe
+
 
 router = APIRouter(prefix="/clients", tags=["Clients"])
 
@@ -12,17 +14,20 @@ def get_clients():
 def get_client(client_id: int):
     return show_client(client_id)
 
+
+
 @router.delete("/{client_id}", status_code=204)
 def delete_client(client_id: int):
     return supprimer_client(client_id)
 
 @router.post("/", status_code=201)
 def create_client(client: ClientCreate):
+    hash_mdp = hacher_mot_de_passe(client.mot_de_passe)
     return insert_client(
         client.nom,
-        client.email,
+        client.prenom,
         client.telephone,
-        client.mot_de_passe_hash
+        hash_mdp
     )
 
 @router.put("/{client_id}")

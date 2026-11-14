@@ -89,7 +89,7 @@ def insert_role(nom: str):
                 cursor.execute(
                     """
                     INSERT INTO role (nom)
-                    VALUES (%s, %s, %s)
+                    VALUES (%s)
                     """,
                     (nom,)
                 )
@@ -128,7 +128,7 @@ def update_role(role_id: int, nom: str):
 
                 updated = cursor.rowcount
 
-            updated.commit()
+            connection.commit()
 
             if updated == 0:
                 with connection.cursor() as cursor:

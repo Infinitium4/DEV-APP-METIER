@@ -12,7 +12,7 @@ def get_roles():
 def get_role(role_id: int):
     return show_role(role_id)
 
-@router.delete("/{id_role}", status_code=204)
+@router.delete("/{role_id}", status_code=204)
 def delete_role(role_id: int):
     return supprimer_role(role_id)
 
