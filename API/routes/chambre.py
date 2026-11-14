@@ -9,7 +9,7 @@ def get_chambres():
     return show_chambres()
 
 @router.get("/sales")
-def get_chambre_num():
+def get_chambre_sales():
     return show_chambres_sales()
 
 @router.get("/propre/{chambre_id}")
@@ -25,7 +25,7 @@ def get_chambre_libre(chambre_id: int):
     return show_chambre_libre(chambre_id)
 
 @router.get("/reservable")
-def get_chambre_num():
+def get_chambre_reservable():
     return show_chambre_reservable()
 
 

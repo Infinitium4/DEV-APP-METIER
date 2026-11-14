@@ -13,7 +13,7 @@ def get_reservation(reservation_id: int):
     return show_reservation(reservation_id)
 
 @router.get("/dates/{reservation_id}")
-def get_reservation_num(reservation_id: int):
+def get_reservation_dates(reservation_id: int):
     return show_reservation_dates(reservation_id)
 
 @router.get("/client/{id_client}")

@@ -13,7 +13,7 @@ def get_nettoyage(nettoyage_id: int):
     return show_nettoyage(nettoyage_id)
 
 @router.get("/dates/{nettoyage_id}")
-def get_nettoyage_num(nettoyage_id: int):
+def get_nettoyage_dates(nettoyage_id: int):
     return show_nettoyage_dates(nettoyage_id)
 
 @router.get("/personnel/{id_personnel}")
