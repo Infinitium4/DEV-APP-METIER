@@ -75,6 +75,7 @@ function donneesCompte(form) {
 }
 function afficherPublic(inscription = false) {
   application.className = 'public'; application.setAttribute('aria-busy', 'false');
+  document.querySelector('#groupe-projet').hidden = false;
   application.innerHTML = inscription ? `
     <div class="carte"><h1>Créer un compte client</h1>
     <form id="inscription">${champsCompte}<button type="submit">Créer mon compte</button></form>
@@ -117,6 +118,7 @@ async function demarrer() {
     if (version !== generation) return;
     utilisateur = compte;
     if (!compte) { afficherPublic(); return; }
+    document.querySelector('#groupe-projet').hidden = true;
     application.className = '';
     document.querySelector('#entete').hidden = false;
     document.querySelector('#identite').textContent = `${compte.profil.nom} · ${compte.role}`;
