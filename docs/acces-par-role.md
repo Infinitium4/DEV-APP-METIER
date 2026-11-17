@@ -19,7 +19,7 @@ Dans ce tableau, « accueil » regroupe réceptionniste, manager hôtel et manag
 | Autres créations/modifications/suppressions de chambres | Accueil, selon l'interface existante. |
 | Listes et suppression des clients | Accueil ; profil et modification : client lui-même ou accueil. |
 | Listes du personnel | Accueil ; profil : personnel lui-même ou accueil. |
-| Création/modification/suppression du personnel | Managers, pour empêcher un compte ordinaire de s'attribuer un rôle privilégié. |
+| Création/modification/suppression du personnel | Managers. La création vérifie explicitement que le compte connecté est de type personnel et manager avant le hachage et l'insertion ; le `id_role` envoyé sert uniquement au nouveau salarié. |
 | Liste des rôles | Accueil ; lecture individuelle : son propre rôle ou accueil. |
 | Création/modification/suppression des rôles | Managers. |
 | Lecture des nettoyages | Entretien et managers, pour coordonner les interventions ; recherche par agent : soi-même ou managers. |

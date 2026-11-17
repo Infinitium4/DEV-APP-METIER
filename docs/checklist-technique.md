@@ -104,6 +104,13 @@ Pour chaque évolution, vérifier les modèles, les paramètres de routes, les s
 - Vérifications déjà effectuées avant la demande d'arrêt des tests : import/OpenAPI, 14 tests avec services/connexions simulés et 522 requêtes ASGI, syntaxe Python/JavaScript et reconnaissance des rôles côté frontend. Sondes locales sans écriture : interface et Swagger en 200, listes clients et diagnostic en 401 sans token, inscription/connexion en 422 avec corps vide (validation des champs).
 - Le fichier de tests ajouté a été supprimé à la demande de l'utilisateur ; aucun nouveau test exécuté après cette instruction. Aucun schéma SQL modifié, aucune migration ni écriture métier sur la BDD réelle. La lecture réelle des rôles n'avait pas abouti ; les transactions sont vérifiées avec connexions simulées uniquement. La fin du nettoyage et le changement de propreté restent deux appels distincts.
 
+## Contrôle explicite de la création du personnel — 17 novembre 2026
+
+- Signalement : un compte client pourrait créer du personnel. L'URL et le statut de l'appel concerné ne sont pas connus ; ce comportement n'a pas été reproduit.
+- La version relue possédait déjà une dépendance de rôle manager sur `POST /personnels/`. Le contrôle a été rendu explicite dans la fonction de route : type de compte `personnel` et rôle manager hôtel/général requis, sinon 403 avant hachage du mot de passe et appel du service SQL.
+- L'identité vient toujours du JWT vérifié et le rôle est relu en BDD par `utilisateur_courant`. Le `id_role` de `PersonnelCreate` détermine uniquement le rôle du compte à créer. L'inscription client publique n'est pas modifiée.
+- Vérification statique du chemin JWT → identité → rôle → route → service d'insertion. Aucun test, requête HTTP, modification BDD ou déploiement effectué pour ce renforcement ; la cause du comportement signalé sur le serveur utilisé reste non confirmée.
+
 ## Vérification connexion du 17 novembre 2026
 
 - Route `POST /auth/connexion` ajoutée : téléphone, mot de passe et type client/personnel ; vérification du hash existant et émission du JWT existant (30 minutes).

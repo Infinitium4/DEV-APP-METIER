@@ -28,8 +28,18 @@ def get_role_personnel(id_role: int):
 def delete_personnel(id_personnel: int):
     return supprimer_personnel(id_personnel)
 
-@router.post("/", status_code=201, dependencies=[Depends(exiger_roles(*MANAGERS))])
-def create_personnel(personnel: PersonnelCreate):
+@router.post("/", status_code=201)
+def create_personnel(
+    personnel: PersonnelCreate,
+    utilisateur: dict = Depends(utilisateur_courant),
+):
+    # L'autorisation dépend du compte connecté, jamais du rôle à attribuer.
+    if utilisateur.get("type") != "personnel" or utilisateur.get("role") not in MANAGERS:
+        raise HTTPException(
+            status_code=403,
+            detail="La création de personnel est réservée aux managers",
+        )
+
     hash_mdp = hacher_mot_de_passe(personnel.mot_de_passe)
     return insert_personnel(
         personnel.nom,
