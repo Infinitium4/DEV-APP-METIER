@@ -10,11 +10,36 @@ jobs:
     steps:
       - name: Nettoyage workspace
         run: docker run --rm -v "$GITHUB_WORKSPACE":/w alpine chown -R $(id -u):$(id -g) /w
+
       - uses: actions/checkout@v4
+        # with:
+        #   fetch-depth: 0
+
       - name: Tests
         run: |
           docker run --rm -e PYTHONDONTWRITEBYTECODE=1 -v "$PWD":/app -w /app python:3.12-slim \
             sh -c "pip install -q -r requirements.txt pytest && pytest -p no:cacheprovider tests/unit -v"
+
+      # --- Analyse risque de régression (désactivée) ---
+      # Compare la version en prod avec la version poussée.
+      # Alerte (non bloquante) si du code API change sans test.
+      # Pour activer : décommenter ce bloc + le "with: fetch-depth: 0" plus haut.
+      #
+      # - name: Analyse risque de régression
+      #   run: |
+      #     DEPLOYE=$(git -C ~/DEV-APP-METIER rev-parse HEAD)
+      #     if ! git cat-file -e "$DEPLOYE" 2>/dev/null; then
+      #       echo "::warning::Version déployée non résolue"; exit 0
+      #     fi
+      #     CHANGES=$(git diff --name-only "$DEPLOYE" HEAD)
+      #     CODE=$(echo "$CHANGES" | grep '^API/.*\.py$' || true)
+      #     TESTS=$(echo "$CHANGES" | grep '^tests/' || true)
+      #     echo "Prod : $DEPLOYE"
+      #     echo "Candidate : $GITHUB_SHA"
+      #     echo "Fichiers modifiés :"; echo "$CHANGES"
+      #     if [ -n "$CODE" ] && [ -z "$TESTS" ]; then
+      #       echo "::warning::Code API modifié sans test associé : $(echo $CODE)"
+      #     fi
 
   deploy:
     needs: test
