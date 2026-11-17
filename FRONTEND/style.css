@@ -10,12 +10,18 @@ label { display: block; margin: 12px 0 5px; font-weight: 600; }
 input, select, button { padding: 10px; border: 1px solid #b8c2d0; border-radius: 5px; font: inherit; }
 input, select { width: 100%; }
 button { background: #245ac7; color: white; border: 0; cursor: pointer; }
-form > button { margin-top: 20px; } button + button { margin-left: 8px; }
+form > button { display: block; margin: 20px 0 0 auto; }
+.carte > button { display: block; margin-left: auto; }
+#rafraichir, #reessayer { display: flex; justify-content: flex-end; }
+button.danger { background: #b42318; }
+button.danger:hover:not(:disabled) { background: #912018; }
 button:disabled { opacity: .6; cursor: wait; }
 :focus-visible { outline: 3px solid #93b9fa; outline-offset: 2px; }
 .grille { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; }
 ul { padding: 0; list-style: none; } li { padding: 14px 0; border-bottom: 1px solid #dce2eb; line-height: 1.7; }
-li button { margin: 6px 8px 0 0; }
+li { display: flex; align-items: center; gap: 16px; flex-wrap: wrap; }
+li > div:first-child { flex: 1; min-width: min(100%, 220px); overflow-wrap: anywhere; }
+.actions { display: flex; justify-content: flex-end; flex-wrap: wrap; gap: 8px; margin-left: auto; }
 #message { color: #922323; white-space: pre-line; } #message:empty { display: none; }
 .note { color: #596575; font-size: .9rem; } [hidden] { display: none !important; }
 #groupe-projet { position: fixed; right: 20px; bottom: 14px; color: #596575; font-size: .8rem; text-align: right; }

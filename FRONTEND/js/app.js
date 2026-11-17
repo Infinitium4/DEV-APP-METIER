@@ -25,11 +25,21 @@ function ligne(liste, texte) {
   contenu.textContent = texte;
   li.append(contenu); liste.append(li); return li;
 }
-function action(parent, texte, traitement) {
+function action(parent, texte, traitement, classe = '') {
   const bouton = document.createElement('button');
   bouton.type = 'button'; bouton.textContent = texte;
+  bouton.className = classe;
   bouton.addEventListener('click', () => executer(bouton, traitement));
-  parent.append(bouton);
+  let conteneur = parent;
+  if (parent.tagName === 'LI') {
+    conteneur = parent.querySelector('.actions');
+    if (!conteneur) {
+      conteneur = document.createElement('div');
+      conteneur.className = 'actions';
+      parent.append(conteneur);
+    }
+  }
+  conteneur.append(bouton);
   return bouton;
 }
 async function executer(bouton, traitement) {
@@ -178,7 +188,7 @@ async function afficherReservations() {
       await envoyer(`/reservations/${r.id}`, 'DELETE');
       await afficherReservations();
       message.textContent = 'Réservation supprimée.';
-    });
+    }, 'danger');
   }
   const form = formulaire('reservation', async form => {
     const debut = valeur(form, 'date_debut'), fin = valeur(form, 'date_fin');
