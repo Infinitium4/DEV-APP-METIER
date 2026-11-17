@@ -75,6 +75,7 @@ function donneesCompte(form) {
 }
 function afficherPublic(inscription = false) {
   application.className = 'public'; application.setAttribute('aria-busy', 'false');
+  document.querySelector('#groupe-projet').hidden = false;
   application.innerHTML = inscription ? `
     <div class="carte"><h1>Créer un compte client</h1>
     <form id="inscription">${champsCompte}<button type="submit">Créer mon compte</button></form>
@@ -110,13 +111,15 @@ function afficherPublic(inscription = false) {
 
 async function demarrer() {
   const version = ++generation;
+  let compte = null;
   clearTimeout(expiration);
   application.setAttribute('aria-busy', 'true');
   try {
-    const compte = await chargerUtilisateur();
+    compte = await chargerUtilisateur();
     if (version !== generation) return;
     utilisateur = compte;
     if (!compte) { afficherPublic(); return; }
+    document.querySelector('#groupe-projet').hidden = true;
     application.className = '';
     document.querySelector('#entete').hidden = false;
     document.querySelector('#identite').textContent = `${compte.profil.nom} · ${compte.role}`;
@@ -126,6 +129,12 @@ async function demarrer() {
     else await afficherReservations();
   } catch (erreur) {
     if (version !== generation) return;
+    if (compte) {
+      application.innerHTML = '<section><h1>Espace indisponible</h1><p>Vous êtes connecté, mais les données de votre espace ne peuvent pas être chargées.</p><div id="reessayer"></div></section>';
+      action(document.querySelector('#reessayer'), 'Réessayer', demarrer);
+      afficherErreur(erreur);
+      return;
+    }
     utilisateur = null; sessionStorage.removeItem('access_token');
     document.querySelector('#entete').hidden = true;
     afficherPublic(); afficherErreur(erreur);
@@ -152,9 +161,10 @@ async function afficherReservations() {
     <label>Chambre<select name="id_chambre" required></select></label>
     <label>Arrivée<input name="date_debut" type="date" required></label>
     <label>Départ<input name="date_fin" type="date" required></label>
-    <label>Personnes<input name="nb_personnes" type="number" min="1" step="1" required></label>
+    <label>Nombre de Personnes<input name="nb_personnes" type="number" min="1" step="1" required></label>
     </div><button type="submit">Réserver</button></form></section>
-    ${accueil ? `<section><h2>Créer un compte</h2><form id="compte"><label>Type de compte<select name="type_compte"><option value="client">Client</option><option value="personnel">Personnel</option></select></label><label id="label-role" hidden>Rôle<select name="id_role"></select></label>${champsCompte}<button type="submit">Créer le compte</button></form></section>` : ''}`;
+    ${accueil ? `<section><h2>Ajouter une chambre</h2><form id="chambre"><label>Nombre de lits<input name="nb_lit" type="number" min="1" step="1" required></label><button type="submit">Ajouter la chambre</button></form></section>
+    <section><h2>Créer un compte</h2><form id="compte"><label>Type de compte<select name="type_compte"><option value="client">Client</option><option value="personnel">Personnel</option></select></label><label id="label-role" hidden>Rôle<select name="id_role"></select></label>${champsCompte}<button type="submit">Créer le compte</button></form></section>` : ''}`;
   const liste = document.querySelector('#reservations');
   const visibles = accueil ? reservations : reservations.filter(r => Number(r.id_client) === compte.id);
   if (!visibles.length) ligne(liste, 'Aucune réservation.');
@@ -181,6 +191,10 @@ async function afficherReservations() {
   for (const c of libres) option(form.elements.id_chambre, c.id, `Chambre ${c.id} · ${c.nb_lit} lit(s)`);
   if (!libres.length) form.querySelector('button').disabled = true;
   if (accueil) {
+    formulaire('chambre', async form => {
+      await envoyer('/chambres/', 'POST', { nb_lit: nombre(form, 'nb_lit') });
+      await afficherReservations(); message.textContent = 'Chambre ajoutée.';
+    });
     option(form.elements.id_client, '', 'Choisir un client');
     for (const c of clients) option(form.elements.id_client, c.id, `${c.nom} ${c.prenom} · ${c.telephone}`);
     afficherChambres(chambres);

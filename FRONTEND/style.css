@@ -18,4 +18,5 @@ ul { padding: 0; list-style: none; } li { padding: 14px 0; border-bottom: 1px so
 li button { margin: 6px 8px 0 0; }
 #message { color: #922323; white-space: pre-line; } #message:empty { display: none; }
 .note { color: #596575; font-size: .9rem; } [hidden] { display: none !important; }
+#groupe-projet { position: fixed; right: 20px; bottom: 14px; color: #596575; font-size: .8rem; text-align: right; }
 @media(max-width: 550px) { header { align-items: start; } main { padding: 0 12px; } .carte, section { padding: 18px; } }
