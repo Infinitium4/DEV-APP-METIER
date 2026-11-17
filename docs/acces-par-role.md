@@ -1,6 +1,41 @@
 # Contrôle d'accès aux routes par rôle
 
-Ce document explique le contrôle d'accès de l'API FastAPI du projet. Le code contient les fonctions de hachage et de JWT, la dépendance de vérification du token et la route de test `/auth/test`. La connexion aux comptes en BDD et les permissions métier restent à brancher. La présence du code ne remplace pas un test de l'API en fonctionnement.
+## État actuel — 17 novembre 2026
+
+Le contrôle est implémenté dans `API/dependances.py` et les six routeurs métier. `utilisateur_courant` utilise le JWT vérifié pour retrouver le compte et son rôle en BDD ; `exiger_roles` applique les droits. Les libellés usuels, accents, apostrophes et différences de casse sont normalisés. Le type de compte et son rôle ne sont jamais pris dans un formulaire comme preuve d'autorisation.
+
+Dans ce tableau, « accueil » regroupe réceptionniste, manager hôtel et manager général ; « managers » regroupe uniquement les deux derniers.
+
+| Opération | Droit appliqué |
+| --- | --- |
+| `POST /auth/connexion`, `POST /clients/` | Publics ; l'inscription crée uniquement un client. |
+| Disponibilités et réservation | Client ou accueil. Le client réserve pour lui-même. |
+| Détail, dates, modification et suppression d'une réservation | Client propriétaire ou accueil. La liste globale est réservée à l'accueil. |
+| Réservations par chambre | Client : seulement les dates occupées, sans identité des autres clients ; accueil : détails complets. |
+| Liste des chambres | Client : uniquement propres et non réservées ; accueil : liste complète. |
+| Chambres sales et état de propreté | Accueil et entretien. |
+| Signaler sale | Accueil et entretien ; l'entretien ne modifie pas une chambre affectée à un autre agent. |
+| Marquer propre | Entretien affecté à un nettoyage actif de cette chambre, ou managers. |
+| Autres créations/modifications/suppressions de chambres | Accueil, selon l'interface existante. |
+| Listes et suppression des clients | Accueil ; profil et modification : client lui-même ou accueil. |
+| Listes du personnel | Accueil ; profil : personnel lui-même ou accueil. |
+| Création/modification/suppression du personnel | Managers, pour empêcher un compte ordinaire de s'attribuer un rôle privilégié. |
+| Liste des rôles | Accueil ; lecture individuelle : son propre rôle ou accueil. |
+| Création/modification/suppression des rôles | Managers. |
+| Lecture des nettoyages | Entretien et managers, pour coordonner les interventions ; recherche par agent : soi-même ou managers. |
+| Démarrage d'un nettoyage | Entretien ou managers, affecté au compte connecté ; chambre propre ou déjà affectée refusée. |
+| Fin et annulation d'un nettoyage | Entretien propriétaire ou managers, uniquement si le nettoyage est actif. |
+| Diagnostic `GET /api` | Managers. |
+
+Les permissions métier suivent le tableau Hôtel de `notes.md`. Les droits de gestion des comptes/rôles et les restrictions de propriétaire sont précisés ci-dessus pour couvrir les opérations techniques non détaillées dans ce tableau. Sécurité et manager de garde peuvent charger leur profil et leur rôle, mais n'ont pas accès aux opérations hôtelières ci-dessus. Les gardes restent abandonnées.
+
+Le contrôle des nettoyages est effectué avant écriture et sous verrou SQL dans les services. Aucune migration n'est nécessaire : les colonnes existantes sont conservées. L'ancien `id_personnel` du corps HTTP est facultatif et ignoré pour l'identité.
+
+Les contrôles ont été exercés avec des services et connexions simulés ; l'intégration MariaDB réelle n'est pas validée. Le fichier de tests ajouté a été retiré à la demande de l'utilisateur. Aucun nouveau test après cette demande.
+
+## Explications pédagogiques historiques
+
+Les sections suivantes expliquent le mécanisme général. Leurs exemples de `/auth/test` sont historiques : cette route n'est plus exposée ; la connexion actuelle est `POST /auth/connexion` et les permissions actives sont celles du tableau ci-dessus.
 
 ## À quoi sert un header ?
 

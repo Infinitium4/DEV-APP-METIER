@@ -26,7 +26,7 @@ def verifier_mot_de_passe(mot_de_passe: str, hash_stocke: str | None,) -> bool:
         return False
 
 
-#On créé le tocken pour l'utilisateur si il a bien le role valide 
+#On créé le tocken pour l'utilisateur
 def creer_token(id_utilisateur: int, type_utilisateur: str,cle_secrete: str,) -> str:
     if type_utilisateur not in ("client", "personnel"):
         raise ValueError("Type utilisateur invalide")

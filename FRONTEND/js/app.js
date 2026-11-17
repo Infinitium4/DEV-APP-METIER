@@ -126,7 +126,8 @@ async function demarrer() {
     expiration = setTimeout(() => { deconnecter(); message.textContent = 'Session expirée. Reconnectez-vous.'; }, Math.max(0, compte.expiration - Date.now()));
     application.innerHTML = '<p>Chargement de votre espace…</p>';
     if (compte.role === 'entretien') await afficherEntretien();
-    else await afficherReservations();
+    else if (['client', 'accueil', 'manager_hotel', 'manager_general'].includes(compte.role)) await afficherReservations();
+    else application.innerHTML = '<section><h1>Espace personnel</h1><p>Aucune fonctionnalité disponible pour votre rôle.</p></section>';
   } catch (erreur) {
     if (version !== generation) return;
     if (compte) {
@@ -143,15 +144,17 @@ async function demarrer() {
 
 async function afficherReservations() {
   const compte = utilisateur;
-  const accueil = compte.role === 'accueil';
+  const gestionPersonnel = ['manager_hotel', 'manager_general'].includes(compte.role);
+  const accueil = compte.role === 'accueil' || gestionPersonnel;
   const [chambres, reservations, clients, roles] = await Promise.all([
     appelerApi('/chambres/'),
     appelerApi(accueil ? '/reservations/' : `/reservations/client/${compte.id}`),
     accueil ? appelerApi('/clients/') : Promise.resolve([]),
-    accueil ? appelerApi('/roles/') : Promise.resolve([]),
+    gestionPersonnel ? appelerApi('/roles/') : Promise.resolve([]),
   ]);
   if (utilisateur !== compte) return;
   application.innerHTML = `<h1>${accueil ? "Espace accueil" : "Mes réservations"}</h1>
+    ${gestionPersonnel ? '<button type="button" id="ouvrir-nettoyages">Suivre les nettoyages</button>' : ''}
     ${accueil ? `<section><h2>Chambres</h2><label>Statut<select id="filtre"><option value="toutes">Toutes</option><option value="libres">Disponibles</option><option value="reservees">Réservées</option></select></label><ul id="chambres"></ul></section>` : ''}
     <section><h2>${accueil ? 'Réservations' : 'Mes séjours'}</h2><ul id="reservations"></ul></section>
     <section><h2>Effectuer une réservation</h2>
@@ -164,7 +167,8 @@ async function afficherReservations() {
     <label>Nombre de Personnes<input name="nb_personnes" type="number" min="1" step="1" required></label>
     </div><button type="submit">Réserver</button></form></section>
     ${accueil ? `<section><h2>Ajouter une chambre</h2><form id="chambre"><label>Nombre de lits<input name="nb_lit" type="number" min="1" step="1" required></label><button type="submit">Ajouter la chambre</button></form></section>
-    <section><h2>Créer un compte</h2><form id="compte"><label>Type de compte<select name="type_compte"><option value="client">Client</option><option value="personnel">Personnel</option></select></label><label id="label-role" hidden>Rôle<select name="id_role"></select></label>${champsCompte}<button type="submit">Créer le compte</button></form></section>` : ''}`;
+    <section><h2>Créer un compte</h2><form id="compte"><label>Type de compte<select name="type_compte"><option value="client">Client</option>${gestionPersonnel ? '<option value="personnel">Personnel</option>' : ''}</select></label><label id="label-role" hidden>Rôle<select name="id_role"></select></label>${champsCompte}<button type="submit">Créer le compte</button></form></section>` : ''}`;
+  if (gestionPersonnel) document.querySelector('#ouvrir-nettoyages').onclick = () => executer(document.querySelector('#ouvrir-nettoyages'), afficherEntretien);
   const liste = document.querySelector('#reservations');
   const visibles = accueil ? reservations : reservations.filter(r => Number(r.id_client) === compte.id);
   if (!visibles.length) ligne(liste, 'Aucune réservation.');
@@ -202,6 +206,7 @@ async function afficherReservations() {
     const creation = formulaire('compte', async form => {
       const donnees = donneesCompte(form);
       const personnel = valeur(form, 'type_compte') === 'personnel';
+      if (personnel && !gestionPersonnel) throw new Error('Accès interdit.');
       if (personnel) {
         donnees.id_role = nombre(form, 'id_role');
         if (!donnees.id_role) throw new Error('Sélectionnez un rôle existant.');
@@ -233,10 +238,12 @@ function afficherChambres(chambres) {
 
 async function afficherEntretien() {
   const compte = utilisateur;
+  const manager = ['manager_hotel', 'manager_general'].includes(compte.role);
   const [sales, nettoyages] = await Promise.all([appelerApi('/chambres/sales'), appelerApi('/nettoyages/')]);
   if (utilisateur !== compte) return;
   const actifs = nettoyages.filter(n => !n.date_fin);
-  application.innerHTML = `<h1>Espace entretien</h1><section><h2>Chambres sales à nettoyer</h2><ul id="sales"></ul></section><section><h2>Nettoyages en cours</h2><ul id="nettoyages"></ul><p class="note">Seul l'agent ayant démarré un nettoyage peut le terminer ou l'annuler depuis cette interface. Une annulation supprime le nettoyage.</p></section>`;
+  application.innerHTML = `<h1>Espace entretien</h1>${manager ? '<button type="button" id="ouvrir-reservations">Voir les réservations</button>' : ''}<section><h2>Chambres sales à nettoyer</h2><ul id="sales"></ul></section><section><h2>Nettoyages en cours</h2><ul id="nettoyages"></ul><p class="note">Un agent peut terminer ou annuler ses nettoyages ; les managers peuvent intervenir sur tous. Une annulation supprime le nettoyage.</p></section>`;
+  if (manager) document.querySelector('#ouvrir-reservations').onclick = () => executer(document.querySelector('#ouvrir-reservations'), afficherReservations);
   const liste = document.querySelector('#sales');
   for (const chambre of sales.filter(c => !actifs.some(n => Number(n.id_chambre) === Number(c.id)))) {
     const li = ligne(liste, `Chambre ${chambre.id} · ${chambre.nb_lit} lit(s) · Sale`);
@@ -244,7 +251,7 @@ async function afficherEntretien() {
       const recents = await appelerApi(`/nettoyages/chambre/${chambre.id}`);
       if (recents.some(n => !n.date_fin)) throw new Error('Un nettoyage est déjà en cours pour cette chambre.');
       const resultat = await envoyer('/nettoyages/', 'POST', { date_debut: maintenant(), id_chambre: chambre.id, id_personnel: compte.id });
-      if (!resultat?.id) throw new Error("Le serveur n'a pas confirmé le démarrage. Vérifiez que le rôle en base est nommé entretien.");
+      if (!resultat?.id) throw new Error("Le serveur n'a pas confirmé le démarrage du nettoyage.");
       await afficherEntretien(); message.textContent = 'Nettoyage démarré.';
     });
   }
@@ -253,7 +260,7 @@ async function afficherEntretien() {
   for (const n of actifs) {
     const mien = Number(n.id_personnel) === compte.id;
     const li = ligne(cours, `Chambre ${n.id_chambre} · En cours depuis ${n.date_debut} · ${mien ? 'Votre nettoyage' : 'Autre agent'}`);
-    if (!mien) continue;
+    if (!mien && !manager) continue;
     action(li, 'Terminer', async () => {
       // Deux opérations distinctes : le backend ne les regroupe pas en transaction.
       await envoyer(`/chambres/proprete/${n.id_chambre}`, 'PUT', { propre: true });

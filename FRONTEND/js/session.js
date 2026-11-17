@@ -23,8 +23,8 @@ export async function chargerUtilisateur() {
   let role = 'client';
   if (identite.type === 'personnel') {
     const donnees = await appelerApi(`/roles/${profil.id_role}`);
-    const nom = donnees.nom.trim().toLowerCase().replace(/\u2019/g, "'");
-    role = ({ accueil: 'accueil', receptionniste: 'accueil', 'r\u00e9ceptionniste': 'accueil', entretien: 'entretien', "personnel d'accueil": 'accueil', "personnel d'entretien": 'entretien' })[nom];
+    const nom = donnees.nom.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/\u2019/g, "'").replace(/_/g, ' ').trim().replace(/\s+/g, ' ');
+    role = ({ accueil: 'accueil', receptionniste: 'accueil', entretien: 'entretien', "personnel d'accueil": 'accueil', "personnel d'entretien": 'entretien', securite: 'securite', 'personnel de securite': 'securite', 'manager de garde': 'manager_garde', 'manager garde': 'manager_garde', 'manager hotel': 'manager_hotel', 'manager general': 'manager_general' })[nom];
     if (!role) throw new Error(`Aucune interface prévue pour le rôle : ${donnees.nom}.`);
   }
   return { ...identite, profil, role };

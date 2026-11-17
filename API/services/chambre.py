@@ -225,11 +225,22 @@ def insert_chambre(nb_lit: int):
         )
 
 
-def update_chambre_proprete(chambre_id: int, propre: bool):
+def update_chambre_proprete(chambre_id: int, propre: bool, id_personnel: int | None = None):
     try:
         connection = get_connection()
         try:
             with connection.cursor() as cursor:
+                if id_personnel is not None:
+                    cursor.execute("SELECT id FROM chambre WHERE id = %s FOR UPDATE", (chambre_id,))
+                    if cursor.fetchone() is None:
+                        raise HTTPException(status_code=404, detail="Chambre introuvable")
+                    cursor.execute(
+                        "SELECT id_personnel FROM nettoyage WHERE id_chambre = %s AND date_fin IS NULL FOR UPDATE",
+                        (chambre_id,),
+                    )
+                    actifs = cursor.fetchall()
+                    if any(n["id_personnel"] != id_personnel for n in actifs) or (propre and not actifs):
+                        raise HTTPException(status_code=403, detail="Cette chambre ne vous est pas affectée")
                 cursor.execute(
                     """
                     UPDATE chambre SET propre = %s

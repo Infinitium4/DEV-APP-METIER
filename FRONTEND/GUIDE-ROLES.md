@@ -2,7 +2,7 @@
 
 ## Ce qui est implémenté
 
-Toutes les modifications de cette intervention sont dans `FRONTEND`.
+La protection est désormais appliquée dans l'API et l'interface. La matrice actuelle des routes est décrite dans [docs/acces-par-role.md](../docs/acces-par-role.md).
 
 - `index.html` : point d'entrée commun, connexion centrée sans session, inscription client et espaces par rôle.
 - `style.css` : présentation commune et responsive.
@@ -11,17 +11,17 @@ Toutes les modifications de cette intervention sont dans `FRONTEND`.
 - `js/api.js` : envoi du Bearer token, remontée des erreurs et retour à la connexion sur un 401 métier.
 - `connexion.html` et `js/connexion.js` : ancienne adresse redirigée vers l'accueil commun. `connexion.css` et `js/clients.js` sont conservés mais ne sont plus chargés par ces pages.
 
-Le client n'a aucun champ permettant de choisir un autre client. L'identifiant envoyé à la réservation vient de sa session. L'accueil choisit le client, peut ajouter une chambre en indiquant son nombre de lits et peut créer des clients ou des personnels avec n'importe quel rôle existant renvoyé par `/roles/`. Les rôles réceptionniste sont affichés dans l'espace accueil. Aucun rôle n'est créé automatiquement.
+Le client n'a aucun champ permettant de choisir un autre client. L'identifiant envoyé à la réservation vient de sa session. L'accueil choisit le client, peut ajouter une chambre en indiquant son nombre de lits et créer des clients. Seuls les managers hôtel/général peuvent créer ou modifier du personnel et attribuer les rôles existants. Les rôles réceptionniste sont affichés dans l'espace accueil. Aucun rôle n'est créé automatiquement.
 
 Le personnel d'entretien voit les chambres sales sans nettoyage actif et, séparément, les nettoyages en cours de tous les agents. Il peut agir sur ses propres nettoyages. Annuler utilise le DELETE existant : la ligne est supprimée, pas conservée avec un statut « annulé ».
 
 ## Limites actuelles du backend
 
-Ces restrictions sont des règles d'interface, pas des autorisations serveur. Les routes métier actuelles ne vérifient pas le JWT : quelqu'un peut encore appeler directement une API avec un autre identifiant. Le décodage du JWT dans le navigateur ne vérifie pas sa signature.
+Les routes métier vérifient maintenant le JWT, le compte, le rôle et les droits de propriétaire concernés. La connexion et l'inscription client restent publiques. Le décodage du JWT dans le navigateur sert seulement à l'affichage ; l'autorisation est contrôlée par le serveur.
 
 Le JWT existant contient `sub` (`client:ID` ou `personnel:ID`) et `exp`. Le frontend récupère ensuite `/clients/{id}` ou `/personnels/{id}`, puis `/roles/{id_role}`. Il n'existe pas de route `/auth/me` : aucune n'est appelée ni inventée.
 
-Les noms `Accueil`, `Receptionniste`, `Réceptionniste` et `personnel d'accueil` donnent l'espace accueil ; `Entretien` et `personnel d'entretien` donnent l'espace entretien, sans sensibilité à la casse. Un autre rôle ne reçoit aucun espace. Attention : le service nettoyage actuel n'accepte que le nom `entretien` après passage en minuscules ; son nom réel en base doit donc être `Entretien` pour pouvoir démarrer et terminer un nettoyage.
+Les libellés réceptionniste/accueil, entretien et leurs variantes sont normalisés, y compris les accents et apostrophes. Les managers hôtel/général disposent des espaces accueil et entretien ; ils seuls peuvent gérer les comptes du personnel. Sécurité et manager de garde ont un espace sans opérations disponibles, puisque les gardes ont été abandonnées.
 
 La fin d'un nettoyage utilise deux appels : chambre propre, puis date de fin. Une panne entre les deux laisse un état partiel, signalé à l'écran ; on peut réessayer « Terminer ». Le backend devrait effectuer les deux écritures dans une transaction. L'annulation rétablit d'abord l'état sale, puis supprime la ligne.
 
@@ -31,7 +31,7 @@ Les chambres proposées à la réservation sont propres et non réservées selon
 
 ## Guide : mettre en place une vraie protection
 
-Les extraits backend ci-dessous sont des propositions à appliquer séparément. Aucun fichier API n'a été modifié dans cette intervention. Lire `docs/checklist-technique.md` avant de les appliquer et mettre à jour le suivi après les tests.
+Les contrôles ci-dessous sont intégrés dans les fichiers API. Lire `docs/checklist-technique.md` avant de modifier leurs règles ; la matrice active dans `docs/acces-par-role.md` précise les droits de chaque opération.
 
 ### 1. Vérifier l'authentification
 
@@ -41,58 +41,13 @@ Côté serveur, réutiliser `exiger_token_valide` de `API/securite.py`. Cette d�
 
 ### 2. Retrouver le rôle depuis la base
 
-Créer par exemple `API/dependances.py` avec cette dépendance. Ne jamais prendre le rôle ou l'identifiant personnel dans le formulaire comme preuve d'identité.
+Les fonctions sont dans `API/dependances.py` :
 
-```python
-from fastapi import Depends, HTTPException
-from API.securite import exiger_token_valide
-from API.services.client import show_client
-from API.services.personnel import show_personnel
-from API.services.role import show_role
+- `utilisateur_courant` utilise le `sub` du JWT vérifié, vérifie l'existence du compte et relit le rôle en BDD.
+- `normaliser_role` accepte les variantes de noms présentes dans les scripts et le tableau de `notes.md`.
+- `exiger_roles` renvoie 403 si le compte n'a pas un rôle autorisé. Les groupes `ACCUEIL`, `MANAGERS`, `RESERVATIONS`, `NETTOYAGES` et `CHAMBRES_SALES` évitent de répéter les libellés dans chaque route.
 
-
-def utilisateur_courant(claims: dict = Depends(exiger_token_valide)):
-    try:
-        type_compte, identifiant = claims["sub"].split(":")
-        identifiant = int(identifiant)
-        if type_compte not in ("client", "personnel") or identifiant <= 0:
-            raise ValueError()
-    except (KeyError, ValueError, TypeError, AttributeError):
-        raise HTTPException(status_code=401, detail="Identité invalide")
-
-    try:
-        if type_compte == "client":
-            profil = show_client(identifiant)
-            role = "client"
-        else:
-            profil = show_personnel(identifiant)
-            nom = show_role(profil["id_role"])["nom"].strip().lower()
-            role = {
-                "accueil": "accueil",
-                "receptionniste": "accueil",
-                "réceptionniste": "accueil",
-                "personnel d'accueil": "accueil",
-                "entretien": "entretien",
-                "personnel d'entretien": "entretien",
-            }.get(nom)
-            if role is None:
-                raise HTTPException(status_code=403, detail="Rôle non autorisé")
-    except HTTPException as erreur:
-        if erreur.status_code == 404:
-            raise HTTPException(status_code=401, detail="Compte introuvable")
-        raise
-    return {"id": identifiant, "type": type_compte, "role": role}
-
-
-def exiger_roles(*roles):
-    def verifier(utilisateur: dict = Depends(utilisateur_courant)):
-        if utilisateur["role"] not in roles:
-            raise HTTPException(status_code=403, detail="Accès interdit")
-        return utilisateur
-    return verifier
-```
-
-Les erreurs BDD doivent rester des erreurs serveur ; ne pas les transformer en « mauvais mot de passe ». Le rôle est relu en base à chaque requête pour prendre en compte ses modifications.
+Les erreurs BDD restent des erreurs serveur ; elles ne sont pas transformées en « mauvais mot de passe ». Le rôle est relu à chaque requête pour prendre en compte ses modifications.
 
 ### 3. Empêcher l'accès aux vues sans session
 
@@ -115,55 +70,17 @@ if (!utilisateur) {
 
 ### 4. Restreindre les routes selon les rôles et le propriétaire
 
-Dans `API/routes/reservation.py`, protéger la liste globale pour l'accueil et contrôler le propriétaire pour la lecture par client :
+Chaque route métier utilise les dépendances de `API/dependances.py`. Un groupe entier partageant les mêmes rôles peut les déclarer dans son `APIRouter`, comme les nettoyages. Les chambres utilisent des contrôles par opération car leurs droits diffèrent.
 
-```python
-from fastapi import Depends, HTTPException
-from API.dependances import exiger_roles
+- Clients : profil et réservations personnels ; les disponibilités d'une chambre ne divulguent pas les identités des autres clients.
+- Réception : gestion des réservations, des chambres et des comptes clients.
+- Entretien : signalement et suivi des chambres à nettoyer ; modification/annulation de ses nettoyages actifs uniquement.
+- Managers hôtel/général : droits opérationnels étendus, gestion du personnel et des rôles.
+- Connexion et inscription client : publiques. La création publique utilise uniquement `ClientCreate` et ne peut pas créer de personnel.
 
+L'identité de l'agent vient du JWT, pas du corps HTTP. Les services vérifient l'affectation et l'état actif sous verrou SQL avant de terminer ou supprimer un nettoyage. Le démarrage refuse une chambre propre ou déjà affectée. L'affectation initiale est celle de l'agent connecté.
 
-@router.get("/")
-def get_reservations(u: dict = Depends(exiger_roles("accueil"))):
-    return show_reservations()
-
-
-@router.get("/client/{id_client}")
-def get_reservation_client(
-    id_client: int,
-    u: dict = Depends(exiger_roles("client", "accueil")),
-):
-    if u["role"] == "client" and u["id"] != id_client:
-        raise HTTPException(status_code=403, detail="Accès interdit")
-    return show_reservation_client(id_client)
-
-
-@router.post("/", status_code=201)
-def create_reservation(
-    reservation: ReservationCreate,
-    u: dict = Depends(exiger_roles("client", "accueil")),
-):
-    id_client = u["id"] if u["role"] == "client" else reservation.id_client
-    return insert_reservation(
-        reservation.date_debut, reservation.date_fin,
-        reservation.nb_personnes, reservation.id_chambre, id_client,
-    )
-```
-
-Ces exemples remplacent les fonctions correspondantes ; ne pas ajouter des routes en doublon. Contrôler aussi les lectures par réservation et par dates, ainsi que PUT/DELETE : vérifier le propriétaire ou réserver ces actions à l'accueil. La route de lecture par chambre est actuellement utilisée pour les disponibilités : prévoir une réponse limitée aux dates occupées pour les clients, sans exposer les identités des autres clients, puis adapter le frontend à ce contrat.
-
-Appliquer cette matrice à toutes les routes, y compris les variantes :
-
-| Fichier | Autorisations à appliquer |
-| --- | --- |
-| `API/routes/auth.py` | Connexion publique, mot de passe vérifié, token signé. |
-| `API/routes/client.py` | POST public avec `ClientCreate` uniquement ; liste globale pour accueil ; profil individuel pour soi ou accueil ; modification/suppression explicitement autorisées selon la politique choisie. |
-| `API/routes/personnel.py` | POST pour accueil ; profil individuel pour soi ou accueil ; listes et gestion pour accueil. |
-| `API/routes/role.py` | Lecture de son rôle ou lecture pour accueil ; interdire par défaut création/modification/suppression de rôles tant qu'une politique n'est pas définie. |
-| `API/routes/chambre.py` | Lectures utiles pour les trois rôles ; signaler sale pour accueil ; marquer propre pour entretien ; autres créations/modifications/suppressions pour accueil selon la politique retenue. |
-| `API/routes/reservation.py` | Client : ses réservations et création pour soi ; accueil : gestion pour tous ; entretien : refus. |
-| `API/routes/nettoyage.py` | Entretien : lire les opérations utiles, créer avec son ID serveur, terminer/annuler uniquement ses opérations actives ; autres rôles : refus. |
-
-Dans `API/routes/nettoyage.py`, obtenir `u` avec `Depends(exiger_roles("entretien"))`. À la création, passer `u["id"]` au service, jamais l'ID envoyé par le navigateur. Avant PUT/DELETE, charger `show_nettoyage(nettoyage_id)`, vérifier `id_personnel == u["id"]` et `date_fin is None`, sinon retourner 403 ou 409 selon le cas. Déplacer les vérifications et la transaction dans `API/services/nettoyage.py` pour éviter les opérations concurrentes incohérentes.
+La fin du nettoyage et la mise à jour de la propreté restent deux opérations distinctes. Aucun schéma SQL ni migration n'est modifié pour ces contrôles.
 
 ### 5. Diriger vers la bonne interface
 

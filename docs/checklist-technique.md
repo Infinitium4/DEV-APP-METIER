@@ -13,9 +13,9 @@ Suivi établi le 14 novembre 2026. À consulter avant une modification important
 
 ## Authentification et réponses
 
-- [ ] Créer une route de connexion qui vérifie le mot de passe et délivre un token.
-- [ ] Protéger les routes métier et appliquer les permissions selon l'identité authentifiée et le rôle en BDD.
-- [ ] Ne pas utiliser un `id_personnel` envoyé par le client comme preuve d'identité.
+- [x] Route de connexion présente : mot de passe vérifié avant émission du JWT. Connexion et inscription client restent publiques.
+- [x] Routes métier protégées par JWT, rôle relu en BDD et permissions appliquées selon `notes.md` ; contrôles de propriétaire ajoutés pour les comptes clients et réservations (17 novembre 2026, limites ci-dessous).
+- [x] Identité de l'agent de nettoyage issue du JWT ; l'ancien champ `id_personnel` du corps HTTP est accepté pour compatibilité mais n'accorde aucun droit.
 - [ ] Choisir un identifiant de connexion unique et garantir son unicité en BDD.
 - [ ] Transmettre `JWT_SECRET_KEY` au conteneur API lorsque l'authentification sera branchée.
 - [x] `PersonnelPublic` aligné sur les champs publics du service et du script SQL : `id`, `nom`, `telephone` nullable et `id_role`, sans `prenom`. Les GET de collection et de recherche par rôle utilisent `list[PersonnelPublic]` ; le détail utilise `PersonnelPublic` (vérifié le 17 novembre 2026, sans accès à la BDD réelle).
@@ -26,7 +26,7 @@ Suivi établi le 14 novembre 2026. À consulter avant une modification important
 
 ## Cohérence métier
 
-- [ ] Refuser explicitement un rôle non autorisé dans les nettoyages avec HTTP 403, au lieu de retourner `None`.
+- [x] Nettoyages : rôles refusés en 403 par les dépendances ; vérification transactionnelle du propriétaire et de l'état actif avant modification/suppression.
 - [ ] Vérifier les chevauchements de réservations à la création et à la modification, y compris les demandes concurrentes.
 - [ ] Calculer la disponibilité pour une période à partir des réservations. Le booléen `reserve` ne représente pas un calendrier.
 - [ ] Définir la capacité d'une chambre et vérifier `nb_personnes` par rapport à celle-ci.
@@ -69,6 +69,16 @@ Ces constats ne garantissent pas l'état de la VM et doivent être revérifiés 
 ## Méthode de vérification
 
 Pour chaque évolution, vérifier les modèles, les paramètres de routes, les signatures des services, les colonnes SQL, les transactions et les réponses HTTP. Distinguer les vérifications statiques et avec connexions simulées des tests réellement exécutés sur MariaDB. Ne pas annoncer une migration ou un déploiement comme réalisé sans l'avoir effectué.
+
+## Protection des routes du 17 novembre 2026
+
+- `API/dependances.py` conserve les deux fonctions communes `utilisateur_courant` et `exiger_roles`, avec normalisation des libellés et groupes de rôles simples. Les droits effectifs sont détaillés dans `docs/acces-par-role.md`.
+- Connexion et création d'un compte client accessibles sans token ; création/modification/suppression de personnel et de rôles réservées aux managers hôtel/général. L'inscription et son bouton ont été conservés après la précision de l'utilisateur.
+- Les clients accèdent uniquement à leur compte et à leurs réservations. La consultation des réservations d'une chambre leur retourne seulement les dates occupées. Les chambres sales ne leur sont pas exposées par la liste générale.
+- L'entretien agit sur ses nettoyages actifs ; les managers peuvent intervenir sur tous. Verrous SQL avant vérification du propriétaire, modification/suppression et affectation d'un nouveau nettoyage. Une chambre propre ou déjà affectée ne peut pas être reprise.
+- Interface adaptée aux permissions : inscription client publique, gestion du personnel réservée aux managers, navigation des managers entre réservations et nettoyages. Sécurité et manager de garde n'obtiennent aucune fonctionnalité abandonnée.
+- Vérifications déjà effectuées avant la demande d'arrêt des tests : import/OpenAPI, 14 tests avec services/connexions simulés et 522 requêtes ASGI, syntaxe Python/JavaScript et reconnaissance des rôles côté frontend. Sondes locales sans écriture : interface et Swagger en 200, listes clients et diagnostic en 401 sans token, inscription/connexion en 422 avec corps vide (validation des champs).
+- Le fichier de tests ajouté a été supprimé à la demande de l'utilisateur ; aucun nouveau test exécuté après cette instruction. Aucun schéma SQL modifié, aucune migration ni écriture métier sur la BDD réelle. La lecture réelle des rôles n'avait pas abouti ; les transactions sont vérifiées avec connexions simulées uniquement. La fin du nettoyage et le changement de propreté restent deux appels distincts.
 
 ## Vérification connexion du 17 novembre 2026
 

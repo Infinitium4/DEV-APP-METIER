@@ -1,7 +1,5 @@
 from API.database import get_connection
 from fastapi import HTTPException
-from API.services.personnel import show_personnel
-from API.services.role import show_role
 
 
 def show_nettoyages():
@@ -116,120 +114,88 @@ def show_nettoyage_chambre(id_chambre: int):
 
 
 
-def supprimer_nettoyage(nettoyage_id: int):
+def _verifier_nettoyage_actif(cursor, nettoyage_id: int, id_personnel: int | None):
+    cursor.execute(
+        "SELECT id, id_personnel, date_fin FROM nettoyage WHERE id = %s FOR UPDATE",
+        (nettoyage_id,),
+    )
+    nettoyage = cursor.fetchone()
+    if nettoyage is None:
+        raise HTTPException(status_code=404, detail="Nettoyage introuvable")
+    if id_personnel is not None and nettoyage["id_personnel"] != id_personnel:
+        raise HTTPException(status_code=403, detail="Ce nettoyage appartient à un autre agent")
+    if nettoyage["date_fin"] is not None:
+        raise HTTPException(status_code=409, detail="Ce nettoyage est déjà terminé")
+
+
+def supprimer_nettoyage(nettoyage_id: int, id_personnel: int | None):
     try:
         connection = get_connection()
         try:
             with connection.cursor() as cursor:
-                cursor.execute(
-                    "DELETE FROM nettoyage WHERE id = %s",
-                    (nettoyage_id,)
-                )
-
-                deleted = cursor.rowcount
-
+                _verifier_nettoyage_actif(cursor, nettoyage_id, id_personnel)
+                cursor.execute("DELETE FROM nettoyage WHERE id = %s", (nettoyage_id,))
             connection.commit()
-
-            if deleted == 0:
-                raise HTTPException(
-                    status_code=404,
-                    detail="Nettoyage introuvable"
-                )
-
             return {"message": "Nettoyage supprimé"}
-
         finally:
             connection.close()
-
     except HTTPException:
         raise
-
     except Exception:
-        raise HTTPException(
-            status_code=500,
-            detail="Erreur de connexion à la BDD"
-        )
+        raise HTTPException(status_code=500, detail="Erreur lors de la suppression du nettoyage") from None
 
 
 def insert_nettoyage(date_debut: str, id_chambre: int, id_personnel: int):
-    personnel = show_personnel(id_personnel)
-    role = show_role(personnel["id_role"])
-
-    if role["nom"].lower() == "entretien":
+    try:
+        connection = get_connection()
         try:
-            connection = get_connection()
-            try:
-                with connection.cursor() as cursor:
-                    cursor.execute(
-                        """
-                        INSERT INTO nettoyage (date_debut, id_chambre, id_personnel)
-                        VALUES (%s, %s, %s)
-                        """,
-                        (date_debut, id_chambre, id_personnel)
-                    )
+            with connection.cursor() as cursor:
+                # Le verrou empêche deux agents de s'affecter la même chambre.
+                cursor.execute("SELECT id, propre FROM chambre WHERE id = %s FOR UPDATE", (id_chambre,))
+                chambre = cursor.fetchone()
+                if chambre is None:
+                    raise HTTPException(status_code=404, detail="Chambre introuvable")
+                if chambre["propre"]:
+                    raise HTTPException(status_code=409, detail="Cette chambre est déjà propre")
+                cursor.execute(
+                    "SELECT id FROM nettoyage WHERE id_chambre = %s AND date_fin IS NULL LIMIT 1",
+                    (id_chambre,),
+                )
+                if cursor.fetchone() is not None:
+                    raise HTTPException(status_code=409, detail="Un nettoyage est déjà en cours")
+                cursor.execute(
+                    """
+                    INSERT INTO nettoyage (date_debut, id_chambre, id_personnel)
+                    VALUES (%s, %s, %s)
+                    """,
+                    (date_debut, id_chambre, id_personnel),
+                )
+                nettoyage_id = cursor.lastrowid
+            connection.commit()
+            return {"message": "Nettoyage ajouté", "id": nettoyage_id}
+        finally:
+            connection.close()
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=500, detail="Erreur lors de la création du nettoyage") from None
 
-                    nettoyage_id = cursor.lastrowid
 
-                connection.commit()
-
-                return {
-                    "message": "Nettoyage ajouté",
-                    "id": nettoyage_id
-                }
-
-            finally:
-                connection.close()
-
-        except Exception:
-            raise HTTPException(
-                status_code=500,
-                detail="Erreur de connexion à la BDD"
-            )
-
-
-def update_nettoyage(nettoyage_id: int, date_fin: str, id_personnel: int):
-    personnel = show_personnel(id_personnel)
-    role = show_role(personnel["id_role"])
-
-    if role["nom"].lower() == "entretien":
+def update_nettoyage(nettoyage_id: int, date_fin: str, id_personnel: int | None):
+    try:
+        connection = get_connection()
         try:
-            connection = get_connection()
-            try:
-                with connection.cursor() as cursor:
-                    cursor.execute(
-                        """
-                        UPDATE nettoyage SET date_fin = %s
-                        WHERE id = %s
-                        """,
-                        (date_fin, nettoyage_id)
-                    )
-
-                    updated = cursor.rowcount
-
-                connection.commit()
-
-                if updated == 0:
-                    with connection.cursor() as cursor:
-                        cursor.execute(
-                            "SELECT id FROM nettoyage WHERE id = %s",
-                            (nettoyage_id,)
-                        )
-                        if cursor.fetchone() is None:
-                            raise HTTPException(
-                                status_code=404,
-                                detail="Nettoyage introuvable"
-                            )
-
-                return {"message": "Nettoyage mis à jour"}
-
-            finally:
-                connection.close()
-
-        except HTTPException:
-            raise
-
-        except Exception:
-            raise HTTPException(
-                status_code=500,
-                detail="Erreur lors de la modification du nettoyage"
-            )
+            with connection.cursor() as cursor:
+                _verifier_nettoyage_actif(cursor, nettoyage_id, id_personnel)
+                cursor.execute(
+                    "UPDATE nettoyage SET date_fin = %s WHERE id = %s",
+                    (date_fin, nettoyage_id),
+                )
+            connection.commit()
+            return {"message": "Nettoyage mis à jour"}
+        finally:
+            connection.close()
+    except HTTPException:
+        raise
+    except Exception:
+        raise HTTPException(status_code=500, detail="Erreur lors de la modification du nettoyage") from None
