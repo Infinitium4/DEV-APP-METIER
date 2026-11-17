@@ -1,4 +1,3 @@
-import py_compile
 from pathlib import Path
 import pytest
 
@@ -7,4 +6,4 @@ FICHIERS = [f for f in Path(".").rglob("*.py")
 
 @pytest.mark.parametrize("fichier", FICHIERS, ids=str)
 def test_compile(fichier):
-    py_compile.compile(str(fichier), doraise=True)
+    compile(fichier.read_text(), str(fichier), "exec")
