@@ -18,3 +18,5 @@ env/
 .ruff_cache/
 .coverage
 htmlcov/
+actions-runner/
+__pycache__/

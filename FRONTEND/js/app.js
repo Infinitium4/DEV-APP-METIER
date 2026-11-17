@@ -25,11 +25,22 @@ function ligne(liste, texte) {
   contenu.textContent = texte;
   li.append(contenu); liste.append(li); return li;
 }
-function action(parent, texte, traitement) {
+function action(parent, texte, traitement, classe = '') {
   const bouton = document.createElement('button');
   bouton.type = 'button'; bouton.textContent = texte;
+  bouton.className = classe;
   bouton.addEventListener('click', () => executer(bouton, traitement));
-  parent.append(bouton);
+  let conteneur = parent;
+  if (parent.tagName === 'LI') {
+    conteneur = parent.querySelector('.actions');
+    if (!conteneur) {
+      conteneur = document.createElement('div');
+      conteneur.className = 'actions';
+      parent.append(conteneur);
+    }
+  }
+  conteneur.append(bouton);
+  return bouton;
 }
 async function executer(bouton, traitement) {
   bouton.disabled = true; message.textContent = '';
@@ -155,6 +166,7 @@ async function afficherReservations() {
   if (utilisateur !== compte) return;
   application.innerHTML = `<h1>${accueil ? "Espace accueil" : "Mes réservations"}</h1>
     ${gestionPersonnel ? '<button type="button" id="ouvrir-nettoyages">Suivre les nettoyages</button>' : ''}
+    ${accueil ? '<div id="rafraichir"></div>' : ''}
     ${accueil ? `<section><h2>Chambres</h2><label>Statut<select id="filtre"><option value="toutes">Toutes</option><option value="libres">Disponibles</option><option value="reservees">Réservées</option></select></label><ul id="chambres"></ul></section>` : ''}
     <section><h2>${accueil ? 'Réservations' : 'Mes séjours'}</h2><ul id="reservations"></ul></section>
     <section><h2>Effectuer une réservation</h2>
@@ -174,7 +186,13 @@ async function afficherReservations() {
   if (!visibles.length) ligne(liste, 'Aucune réservation.');
   for (const r of visibles) {
     const client = clients.find(c => Number(c.id) === Number(r.id_client));
-    ligne(liste, `Chambre ${r.id_chambre} · ${r.date_debut} · ${r.date_fin} · ${r.nb_personnes} personne(s)${accueil ? ` · ${client ? client.nom + ' ' + client.prenom : 'Client ' + r.id_client}` : ''}`);
+    const li = ligne(liste, `Chambre ${r.id_chambre} · ${r.date_debut} · ${r.date_fin} · ${r.nb_personnes} personne(s)${accueil ? ` · ${client ? client.nom + ' ' + client.prenom : 'Client ' + r.id_client}` : ''}`);
+    action(li, 'Supprimer', async () => {
+      if (!window.confirm(`Supprimer la réservation de la chambre ${r.id_chambre} du ${r.date_debut} au ${r.date_fin} ?`)) return;
+      await envoyer(`/reservations/${r.id}`, 'DELETE');
+      await afficherReservations();
+      message.textContent = 'Réservation supprimée.';
+    }, 'danger');
   }
   const form = formulaire('reservation', async form => {
     const debut = valeur(form, 'date_debut'), fin = valeur(form, 'date_fin');
@@ -195,6 +213,10 @@ async function afficherReservations() {
   for (const c of libres) option(form.elements.id_chambre, c.id, `Chambre ${c.id} · ${c.nb_lit} lit(s)`);
   if (!libres.length) form.querySelector('button').disabled = true;
   if (accueil) {
+    action(document.querySelector('#rafraichir'), 'Rafraîchir', async () => {
+      await afficherReservations();
+      message.textContent = 'Données actualisées.';
+    });
     formulaire('chambre', async form => {
       await envoyer('/chambres/', 'POST', { nb_lit: nombre(form, 'nb_lit') });
       await afficherReservations(); message.textContent = 'Chambre ajoutée.';
@@ -228,10 +250,11 @@ function afficherChambres(chambres) {
   const liste = document.querySelector('#chambres'); liste.replaceChildren();
   for (const c of chambres.filter(c => filtre === 'toutes' || (filtre === 'reservees' ? normaliserBool(c.reserve) : !normaliserBool(c.reserve)))) {
     const li = ligne(liste, `Chambre ${c.id} · ${c.nb_lit} lit(s) · ${normaliserBool(c.reserve) ? 'Réservée' : 'Disponible'} · ${normaliserBool(c.propre) ? 'Propre' : 'Sale'}`);
-    if (normaliserBool(c.propre)) action(li, 'Signaler sale', async () => {
+    const boutonSale = action(li, 'Mettre sale', async () => {
       await envoyer(`/chambres/proprete/${c.id}`, 'PUT', { propre: false });
       await afficherReservations(); message.textContent = 'Chambre signalée sale.';
     });
+    boutonSale.disabled = !normaliserBool(c.propre);
   }
   if (!liste.children.length) ligne(liste, 'Aucune chambre pour ce filtre.');
 }

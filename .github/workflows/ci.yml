@@ -1,0 +1,28 @@
+name: CI
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: self-hosted
+    steps:
+      - name: Nettoyage workspace
+        run: docker run --rm -v "$GITHUB_WORKSPACE":/w alpine chown -R $(id -u):$(id -g) /w
+      - uses: actions/checkout@v4
+      - name: Tests
+        run: |
+          docker run --rm -e PYTHONDONTWRITEBYTECODE=1 -v "$PWD":/app -w /app python:3.12-slim \
+            sh -c "pip install -q -r requirements.txt pytest && pytest -p no:cacheprovider tests/unit -v"
+
+  deploy:
+    needs: test
+    if: github.ref == 'refs/heads/main' && github.event_name == 'push'
+    runs-on: self-hosted
+    steps:
+      - name: Pull + redémarrage
+        run: |
+          cd ~/DEV-APP-METIER
+          git pull --ff-only
+          docker compose up -d --build
