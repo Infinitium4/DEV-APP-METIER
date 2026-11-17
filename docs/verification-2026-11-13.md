@@ -68,4 +68,12 @@ Les écritures réelles de ces modules métier n'ont pas été testées et ne so
 - Les réponses 500 génériques des services masquent la différence entre une connexion impossible et une requête SQL incorrecte.
 - Les tests JWT établissent la validité du token de test ; l'existence et les droits du compte en BDD ne sont pas encore vérifiés par cette dépendance.
 
+## Complément : modèle de réponse du personnel
+
+Le modèle `PersonnelPublic` est ajouté dans `API/models/personnel.py` et relié aux trois GET du personnel avec `response_model`. Il expose `id`, `nom`, `telephone` nullable et `id_role`. La table personnel vérifiée ne possède pas de colonne `prenom` ; `ClientPublic` reste le contrat des clients.
+
+Quatre tests en mémoire vérifient le filtrage de champs privés supplémentaires, les téléphones nuls et l'absence de résultat par rôle. Les quatre lectures réelles correspondantes répondent 200 après redémarrage du serveur. Le schéma OpenAPI inclut ce modèle. Aucun enregistrement de personnel n'a été modifié.
+
+Ce complément porte sur le format des réponses GET. Le défaut `updated.commit()` du PUT personnel reste à corriger, ainsi que les autorisations décrites plus haut.
+
 Aucun mot de passe, token, hash réel ou clé secrète n'est conservé dans ce rapport.

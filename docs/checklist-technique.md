@@ -18,7 +18,7 @@ Suivi établi le 14 novembre 2026. À consulter avant une modification important
 - [ ] Ne pas utiliser un `id_personnel` envoyé par le client comme preuve d'identité.
 - [ ] Choisir un identifiant de connexion unique et garantir son unicité en BDD.
 - [ ] Transmettre `JWT_SECRET_KEY` au conteneur API lorsque l'authentification sera branchée.
-- [ ] Aligner `PersonnelPublic` avec les données réellement renvoyées avant de l'utiliser comme `response_model` : `prenom` était absent du service et de la table.
+- [x] `PersonnelPublic` aligné sur les champs publics du service et du script SQL : `id`, `nom`, `telephone` nullable et `id_role`, sans `prenom`. Les GET de collection et de recherche par rôle utilisent `list[PersonnelPublic]` ; le détail utilise `PersonnelPublic` (vérifié le 17 novembre 2026, sans accès à la BDD réelle).
 - [ ] Conserver les messages métier des erreurs 404 au lieu de les remplacer systématiquement par « route inexistante ».
 - [ ] Distinguer erreurs de connexion, erreurs SQL et violations de clés étrangères ; envisager 409 pour une suppression empêchée.
 - [ ] Harmoniser les suppressions : 204 sans corps, ou 200 avec un message.
@@ -58,6 +58,13 @@ Ces constats ne garantissent pas l'état de la VM et doivent être revérifiés 
 - [x] Chambre limitée à `id`, `nb_lit`, `propre`, `reserve` dans les scripts ; références à `numero` retirées de l'API et des SQL.
 - [x] Tours de garde retirés de l'API et des scripts SQL.
 - [x] Démarrage Docker sur `API.main:app`, frontend dans `FRONTEND` et montage statique après les routes.
+
+## Vérification du 17 novembre 2026 : résolution du conflit personnel
+
+- Conflit de réapplication du stash résolu dans `API/routes/personnel.py` : conservation du chemin `/roles/{id_role}` et des modèles publics de réponse.
+- Le service `show_role_personnel` utilise désormais `fetchall()` : la route renvoie une liste de `PersonnelPublic`, vide si aucun personnel ne correspond au rôle.
+- Six requêtes ASGI en mémoire vérifiées : liste, détail avec téléphone nul, rôle avec plusieurs personnes, rôle sans résultat (`[]`), détail absent (404) et rôle invalide (422). Connexions BDD simulées ; filtrage des champs privés et paramètres SQL vérifiés.
+- Import de l'application, modèles OpenAPI des trois GET et syntaxe des 21 fichiers Python de l'API vérifiés. Aucun changement de schéma, aucune migration ni connexion à MariaDB réelle pour cette intervention.
 
 ## Méthode de vérification
 

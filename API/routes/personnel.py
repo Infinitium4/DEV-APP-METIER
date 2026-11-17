@@ -6,15 +6,15 @@ from API.securite import hacher_mot_de_passe
 
 router = APIRouter(prefix="/personnels", tags=["Personnels"])
 
-@router.get("/")
+@router.get("/", response_model=list[PersonnelPublic])
 def get_personnels():
     return show_personnels()
 
-@router.get("/{personnel_id}")
+@router.get("/{personnel_id}", response_model=PersonnelPublic)
 def get_personnel(personnel_id: int):
     return show_personnel(personnel_id)
 
-@router.get("/roles/{id_role}")
+@router.get("/roles/{id_role}", response_model=list[PersonnelPublic])
 def get_role_personnel(id_role: int):
     return show_role_personnel(id_role)
 
