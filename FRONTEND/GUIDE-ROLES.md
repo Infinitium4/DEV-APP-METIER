@@ -11,7 +11,7 @@ Toutes les modifications de cette intervention sont dans `FRONTEND`.
 - `js/api.js` : envoi du Bearer token, remontée des erreurs et retour à la connexion sur un 401 métier.
 - `connexion.html` et `js/connexion.js` : ancienne adresse redirigée vers l'accueil commun. `connexion.css` et `js/clients.js` sont conservés mais ne sont plus chargés par ces pages.
 
-Le client n'a aucun champ permettant de choisir un autre client. L'identifiant envoyé à la réservation vient de sa session. L'accueil choisit le client et peut créer des clients ou des personnels avec n'importe quel rôle existant renvoyé par `/roles/`. Aucun rôle n'est créé automatiquement.
+Le client n'a aucun champ permettant de choisir un autre client. L'identifiant envoyé à la réservation vient de sa session. L'accueil choisit le client, peut ajouter une chambre en indiquant son nombre de lits et peut créer des clients ou des personnels avec n'importe quel rôle existant renvoyé par `/roles/`. Les rôles réceptionniste sont affichés dans l'espace accueil. Aucun rôle n'est créé automatiquement.
 
 Le personnel d'entretien voit les chambres sales sans nettoyage actif et, séparément, les nettoyages en cours de tous les agents. Il peut agir sur ses propres nettoyages. Annuler utilise le DELETE existant : la ligne est supprimée, pas conservée avec un statut « annulé ».
 
