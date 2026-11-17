@@ -30,6 +30,7 @@ function action(parent, texte, traitement) {
   bouton.type = 'button'; bouton.textContent = texte;
   bouton.addEventListener('click', () => executer(bouton, traitement));
   parent.append(bouton);
+  return bouton;
 }
 async function executer(bouton, traitement) {
   bouton.disabled = true; message.textContent = '';
@@ -221,10 +222,11 @@ function afficherChambres(chambres) {
   const liste = document.querySelector('#chambres'); liste.replaceChildren();
   for (const c of chambres.filter(c => filtre === 'toutes' || (filtre === 'reservees' ? normaliserBool(c.reserve) : !normaliserBool(c.reserve)))) {
     const li = ligne(liste, `Chambre ${c.id} · ${c.nb_lit} lit(s) · ${normaliserBool(c.reserve) ? 'Réservée' : 'Disponible'} · ${normaliserBool(c.propre) ? 'Propre' : 'Sale'}`);
-    if (normaliserBool(c.propre)) action(li, 'Signaler sale', async () => {
+    const boutonSale = action(li, 'Mettre sale', async () => {
       await envoyer(`/chambres/proprete/${c.id}`, 'PUT', { propre: false });
       await afficherReservations(); message.textContent = 'Chambre signalée sale.';
     });
+    boutonSale.disabled = !normaliserBool(c.propre);
   }
   if (!liste.children.length) ligne(liste, 'Aucune chambre pour ce filtre.');
 }

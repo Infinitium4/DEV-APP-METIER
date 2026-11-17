@@ -68,6 +68,23 @@ Ces constats ne garantissent pas l'état de la VM et doivent être revérifiés 
 
 ## Méthode de vérification
 
+### Migration nettoyage sur la VM — 17 novembre 2026
+
+- Blocage reproduit : le rôle du personnel 5 est bien Entretien, mais `nettoyage.date_fin` était NOT NULL sans valeur par défaut (erreur SQL 1364 au démarrage).
+- Après autorisation, migration réelle : `ALTER TABLE nettoyage MODIFY COLUMN date_fin DATETIME NULL DEFAULT NULL`. Conforme au modèle de création, au service et au script d'initialisation existants ; aucune modification du code API.
+- Sauvegarde locale préalable de la structure et des données : `C:/Users/pageo/AppData/Local/Temp/epsi-backups/nettoyage-20261117T131211Z/nettoyage.json`.
+- Insertion réelle sans date de fin vérifiée avec la chambre 102 et le personnel 5, puis ROLLBACK. Aucun nettoyage de test conservé ; données existantes comparées avant/après. L'auto-incrément peut avoir avancé lors du test annulé.
+- Limite : démarrage via navigateur et cycle complet de nettoyage non testés lors de cette migration.
+
+### Migration chambre sur la VM — 17 novembre 2026
+
+- Migration réellement exécutée sur MariaDB : `numero` renommé en `id`, `reserver` renommé en `reserve`. Champs `reserve` et `propre` convertis de BIT en BOOLEAN, avec valeurs par défaut respectives FALSE et TRUE.
+- Les deux chambres et leurs valeurs ont été comparées à la sauvegarde et conservées. Les clés étrangères de `reservation.id_chambre` et `nettoyage.id_chambre` référencent désormais `chambre.id`, sans désactivation des contraintes.
+- Sauvegarde locale avant modification : `C:/Users/pageo/AppData/Local/Temp/epsi-backups/20261117T130902Z/chambre.json` et `chambre.sql` (structure, données chambres et structures des tables liées dans le JSON). Aucune donnée de compte ni aucun secret dans cette sauvegarde.
+- Le premier ALTER combiné a été refusé par MariaDB avant modification ; renommages effectués avec ALGORITHM=INPLACE, puis conversion des booléens dans un second ALTER. Les DDL ne constituent pas une transaction annulable par ROLLBACK.
+- Aucun compte, chambre ou enregistrement métier supprimé pendant cette migration. Aucun changement du code API ou frontend pendant cette intervention ; seule cette checklist est mise à jour dans le dépôt.
+- Vérification HTTP réelle sur l'API locale connectée à la base VM : liste des chambres, chambres sales, détail 101, nettoyages, profil entretien et rôle répondent 200. Aucun test navigateur ni test d'écriture de nettoyage effectué.
+
 Pour chaque évolution, vérifier les modèles, les paramètres de routes, les signatures des services, les colonnes SQL, les transactions et les réponses HTTP. Distinguer les vérifications statiques et avec connexions simulées des tests réellement exécutés sur MariaDB. Ne pas annoncer une migration ou un déploiement comme réalisé sans l'avoir effectué.
 
 ## Vérification connexion du 17 novembre 2026
