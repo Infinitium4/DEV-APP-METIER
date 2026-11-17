@@ -172,7 +172,13 @@ async function afficherReservations() {
   if (!visibles.length) ligne(liste, 'Aucune réservation.');
   for (const r of visibles) {
     const client = clients.find(c => Number(c.id) === Number(r.id_client));
-    ligne(liste, `Chambre ${r.id_chambre} · ${r.date_debut} · ${r.date_fin} · ${r.nb_personnes} personne(s)${accueil ? ` · ${client ? client.nom + ' ' + client.prenom : 'Client ' + r.id_client}` : ''}`);
+    const li = ligne(liste, `Chambre ${r.id_chambre} · ${r.date_debut} · ${r.date_fin} · ${r.nb_personnes} personne(s)${accueil ? ` · ${client ? client.nom + ' ' + client.prenom : 'Client ' + r.id_client}` : ''}`);
+    action(li, 'Supprimer', async () => {
+      if (!window.confirm(`Supprimer la réservation de la chambre ${r.id_chambre} du ${r.date_debut} au ${r.date_fin} ?`)) return;
+      await envoyer(`/reservations/${r.id}`, 'DELETE');
+      await afficherReservations();
+      message.textContent = 'Réservation supprimée.';
+    });
   }
   const form = formulaire('reservation', async form => {
     const debut = valeur(form, 'date_debut'), fin = valeur(form, 'date_fin');
