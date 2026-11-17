@@ -69,3 +69,13 @@ Ces constats ne garantissent pas l'état de la VM et doivent être revérifiés 
 ## Méthode de vérification
 
 Pour chaque évolution, vérifier les modèles, les paramètres de routes, les signatures des services, les colonnes SQL, les transactions et les réponses HTTP. Distinguer les vérifications statiques et avec connexions simulées des tests réellement exécutés sur MariaDB. Ne pas annoncer une migration ou un déploiement comme réalisé sans l'avoir effectué.
+
+## Vérification connexion du 17 novembre 2026
+
+- Route `POST /auth/connexion` ajoutée : téléphone, mot de passe et type client/personnel ; vérification du hash existant et émission du JWT existant (30 minutes).
+- Téléphones en doublon dans une même table refusés ; aucune contrainte SQL ni migration ajoutée.
+- `JWT_SECRET_KEY` transmise par Compose ; sa valeur doit être définie dans l'environnement ou le fichier `.env`. Aucune valeur secrète créée ou modifiée.
+- Page autonome `FRONTEND/connexion.html` : token dans `sessionStorage` pour l'onglet, suppression locale à la déconnexion. Les autres pages ne consomment pas encore ce token et les routes métier restent inchangées.
+- Vérifications réussies : import et OpenAPI ; connexions client/personnel, JWT, compte absent, mauvais mot de passe, doublons et clé absente avec BDD simulée.
+- Limites : aucun test MariaDB réel, navigateur, déploiement ou migration VM effectué. Les points historiques ci-dessus restent le suivi de la revue initiale.
+- Réorganisation : modèle dans `API/models/auth.py`, logique et SQL dans `API/services/auth.py`, route limitée à un appel du service. Contrat HTTP inchangé ; import/OpenAPI et authentification client/personnel revérifiés avec BDD simulée, sans test MariaDB réel.

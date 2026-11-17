@@ -10,8 +10,10 @@ from API.routes.personnel import router as personnel_router
 from API.routes.reservation import router as reservation_router
 from API.routes.role import router as role_router
 from API.database import get_connection
+from API.routes.auth import router as auth_router
 
 app = FastAPI()
+app.include_router(auth_router)
 
 
 app.include_router(chambre_router)
