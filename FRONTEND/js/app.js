@@ -111,10 +111,11 @@ function afficherPublic(inscription = false) {
 
 async function demarrer() {
   const version = ++generation;
+  let compte = null;
   clearTimeout(expiration);
   application.setAttribute('aria-busy', 'true');
   try {
-    const compte = await chargerUtilisateur();
+    compte = await chargerUtilisateur();
     if (version !== generation) return;
     utilisateur = compte;
     if (!compte) { afficherPublic(); return; }
@@ -128,6 +129,12 @@ async function demarrer() {
     else await afficherReservations();
   } catch (erreur) {
     if (version !== generation) return;
+    if (compte) {
+      application.innerHTML = '<section><h1>Espace indisponible</h1><p>Vous êtes connecté, mais les données de votre espace ne peuvent pas être chargées.</p><div id="reessayer"></div></section>';
+      action(document.querySelector('#reessayer'), 'Réessayer', demarrer);
+      afficherErreur(erreur);
+      return;
+    }
     utilisateur = null; sessionStorage.removeItem('access_token');
     document.querySelector('#entete').hidden = true;
     afficherPublic(); afficherErreur(erreur);
