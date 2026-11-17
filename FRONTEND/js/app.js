@@ -153,6 +153,7 @@ async function afficherReservations() {
   ]);
   if (utilisateur !== compte) return;
   application.innerHTML = `<h1>${accueil ? "Espace accueil" : "Mes réservations"}</h1>
+    ${accueil ? '<div id="rafraichir"></div>' : ''}
     ${accueil ? `<section><h2>Chambres</h2><label>Statut<select id="filtre"><option value="toutes">Toutes</option><option value="libres">Disponibles</option><option value="reservees">Réservées</option></select></label><ul id="chambres"></ul></section>` : ''}
     <section><h2>${accueil ? 'Réservations' : 'Mes séjours'}</h2><ul id="reservations"></ul></section>
     <section><h2>Effectuer une réservation</h2>
@@ -192,6 +193,10 @@ async function afficherReservations() {
   for (const c of libres) option(form.elements.id_chambre, c.id, `Chambre ${c.id} · ${c.nb_lit} lit(s)`);
   if (!libres.length) form.querySelector('button').disabled = true;
   if (accueil) {
+    action(document.querySelector('#rafraichir'), 'Rafraîchir', async () => {
+      await afficherReservations();
+      message.textContent = 'Données actualisées.';
+    });
     formulaire('chambre', async form => {
       await envoyer('/chambres/', 'POST', { nb_lit: nombre(form, 'nb_lit') });
       await afficherReservations(); message.textContent = 'Chambre ajoutée.';

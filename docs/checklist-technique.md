@@ -68,6 +68,13 @@ Ces constats ne garantissent pas l'état de la VM et doivent être revérifiés 
 
 ## Méthode de vérification
 
+### Migration réservation sur la VM — 17 novembre 2026
+
+- Table réelle vérifiée vide avant intervention. Sauvegarde structure/données : `C:/Users/pageo/AppData/Local/Temp/epsi-backups/reservation-20261117T132308Z/reservation.json` et structure SQL dans `reservation.sql`.
+- Migration exécutée : `date_debut_resa` renommé en `date_debut`, `date_fin_resa` renommé en `date_fin`, ajout de `nb_personnes INT NOT NULL`, conformément aux modèles, routes, services et script d'initialisation existants. Clés étrangères conservées ; aucune valeur de quantité inventée pour des réservations existantes puisque la table était vide.
+- Création testée via le modèle et la fonction de route réels, le service et MariaDB réelle, en neutralisant commit/close pour annuler la transaction de test. Dates et quantité relues avec succès, puis ROLLBACK ; aucun enregistrement de test conservé. L'auto-incrément peut avoir avancé.
+- Aucun changement de code API/frontend pour cette migration. Pas de test HTTP POST ni navigateur ; les contrôles serveur de chevauchement et de concurrence restent à implémenter, hors du périmètre demandé.
+
 ### Migration nettoyage sur la VM — 17 novembre 2026
 
 - Blocage reproduit : le rôle du personnel 5 est bien Entretien, mais `nettoyage.date_fin` était NOT NULL sans valeur par défaut (erreur SQL 1364 au démarrage).
