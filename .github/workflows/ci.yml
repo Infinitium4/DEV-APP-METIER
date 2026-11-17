@@ -8,6 +8,8 @@ jobs:
   test:
     runs-on: self-hosted
     steps:
+      - name: Nettoyage workspace
+        run: docker run --rm -v "$GITHUB_WORKSPACE":/w alpine chown -R $(id -u):$(id -g) /w
       - uses: actions/checkout@v4
       - name: Tests
         run: |
