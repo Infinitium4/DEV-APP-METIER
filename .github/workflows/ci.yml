@@ -11,5 +11,5 @@ jobs:
       - uses: actions/checkout@v4
       - name: Tests
         run: |
-          docker run --rm -v "$PWD":/app -w /app python:3.12-slim \
-            sh -c "pip install -q -r requirements.txt pytest && pytest tests/unit -v"
+          docker run --rm -e PYTHONDONTWRITEBYTECODE=1 -v "$PWD":/app -w /app python:3.12-slim \
+            sh -c "pip install -q -r requirements.txt pytest && pytest -p no:cacheprovider tests/unit -v"
