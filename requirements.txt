@@ -4,3 +4,4 @@ pymysql
 pyjwt
 pwdlib[argon2]
 python-dotenv
+tzdata

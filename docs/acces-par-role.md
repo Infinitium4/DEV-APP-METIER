@@ -10,7 +10,7 @@ Dans ce tableau, « accueil » regroupe réceptionniste, manager hôtel et manag
 | --- | --- |
 | `POST /auth/connexion`, `POST /clients/` | Publics ; l'inscription crée uniquement un client. |
 | Disponibilités et réservation | Client ou accueil. Le client réserve pour lui-même. |
-| Détail, dates, modification et suppression d'une réservation | Client propriétaire ou accueil. La liste globale est réservée à l'accueil. |
+| Détail, dates et suppression d'une réservation | Client propriétaire ou accueil. La liste globale est réservée à l'accueil. Pour remplacer une réservation, la supprimer puis en créer une nouvelle ; aucune route de modification. |
 | Réservations par chambre | Client : seulement les dates occupées, sans identité des autres clients ; accueil : détails complets. |
 | Liste des chambres | Client : uniquement propres et non réservées ; accueil : liste complète. |
 | Chambres sales et état de propreté | Accueil et entretien. |

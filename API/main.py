@@ -28,7 +28,7 @@ routes_protegees.include_router(nettoyage_router)
 routes_protegees.include_router(personnel_router)
 routes_protegees.include_router(reservation_router)
 routes_protegees.include_router(role_router)
-routes_protegees.include_router(client_router)
+app.include_router(client_router)
 
 app.include_router(routes_protegees)
 
@@ -53,10 +53,10 @@ async def not_found(request: Request, exc):
     return JSONResponse(
         status_code=404,
         content={
-            "error": "404 - Not Found",
-            "message": "La route demandée n'existe pas",
-            "path": request.url.path
-        }
+            "detail": exc.detail,
+            "path": request.url.path,
+        },
+        headers=exc.headers,
     )
 
 app.mount("/", StaticFiles(directory=Path(__file__).resolve().parent.parent / "FRONTEND", html=True), name="frontend")

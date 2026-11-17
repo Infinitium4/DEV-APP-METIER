@@ -74,6 +74,7 @@ Chaque route métier utilise les dépendances de `API/dependances.py`. Un groupe
 
 - Clients : profil et réservations personnels ; les disponibilités d'une chambre ne divulguent pas les identités des autres clients.
 - Réception : gestion des réservations, des chambres et des comptes clients.
+- Les réservations ne se modifient plus : supprimer puis recréer une réservation pour la remplacer. La nouvelle création vérifie à nouveau la disponibilité.
 - Entretien : signalement et suivi des chambres à nettoyer ; modification/annulation de ses nettoyages actifs uniquement.
 - Managers hôtel/général : droits opérationnels étendus, gestion du personnel et des rôles.
 - Connexion et inscription client : publiques. La création publique utilise uniquement `ClientCreate` et ne peut pas créer de personnel.

@@ -1,5 +1,48 @@
 from API.database import get_connection
 from fastapi import HTTPException
+from datetime import date
+from pymysql import MySQLError
+
+def verifier_disponibilite(
+    cursor,
+    id_chambre: int,
+    date_debut: date,
+    date_fin: date,
+):
+    cursor.execute(
+        """
+        SELECT id
+        FROM chambre
+        WHERE id = %s
+        FOR UPDATE
+        """,
+        (id_chambre,),
+    )
+
+    if cursor.fetchone() is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Chambre introuvable",
+        )
+
+    requete = """
+        SELECT id
+        FROM reservation
+        WHERE id_chambre = %s
+          AND date_debut < %s
+          AND date_fin > %s
+    """
+    parametres = [id_chambre, date_fin, date_debut]
+
+    requete += " LIMIT 1 FOR UPDATE"
+
+    cursor.execute(requete, tuple(parametres))
+
+    if cursor.fetchone() is not None:
+        raise HTTPException(
+            status_code=409,
+            detail="Chambre déjà réservée sur cette période",
+        )
 
 
 def show_reservations():
@@ -148,77 +191,57 @@ def supprimer_reservation(reservation_id: int):
         )
 
 
-def insert_reservation(date_debut: str, date_fin: str, nb_personnes: int, id_chambre: int, id_client: int):
+def insert_reservation(date_debut: date, date_fin: date, nb_personnes: int, id_chambre: int, id_client: int,):
+    connection = None
+
     try:
         connection = get_connection()
-        try:
-            with connection.cursor() as cursor:
-                cursor.execute(
-                    """
-                    INSERT INTO reservation (date_debut, date_fin, nb_personnes, id_chambre, id_client)
-                    VALUES (%s, %s, %s, %s, %s)
-                    """,
-                    (date_debut, date_fin, nb_personnes, id_chambre, id_client)
+        connection.begin()
+
+        with connection.cursor() as cursor:
+            verifier_disponibilite(cursor,id_chambre,date_debut,date_fin,)
+
+            cursor.execute(
+                "SELECT id FROM client WHERE id = %s",
+                (id_client,),
+            )
+
+            if cursor.fetchone() is None:
+                raise HTTPException(
+                    status_code=404,
+                    detail="Client introuvable",
                 )
 
-                reservation_id = cursor.lastrowid
+            cursor.execute(
+                """
+                INSERT INTO reservation (date_debut, date_fin, nb_personnes, id_chambre, id_client)
+                VALUES (%s, %s, %s, %s, %s)
+                """,
+                (date_debut, date_fin, nb_personnes, id_chambre, id_client,),
+            )
 
-            connection.commit()
+            reservation_id = cursor.lastrowid
 
-            return {
-                "message": "Reservation ajouté",
-                "id": reservation_id
-            }
+        connection.commit()
 
-        finally:
-            connection.close()
-
-    except Exception:
-        raise HTTPException(
-            status_code=500,
-            detail="Erreur de connexion à la BDD"
-        )
-
-
-def update_reservation(reservation_id: int, date_debut: str, date_fin: str, nb_personnes: int, id_chambre: int):
-    try:
-        connection = get_connection()
-        try:
-            with connection.cursor() as cursor:
-                cursor.execute(
-                    """
-                    UPDATE reservation SET date_debut = %s, date_fin = %s, nb_personnes = %s, id_chambre = %s
-                    WHERE id = %s
-                    """,
-                    (date_debut, date_fin, nb_personnes, id_chambre, reservation_id)
-                )
-
-                updated = cursor.rowcount
-
-            connection.commit()
-
-            if updated == 0:
-                with connection.cursor() as cursor:
-                    cursor.execute(
-                        "SELECT id FROM reservation WHERE id = %s",
-                        (reservation_id,)
-                    )
-                    if cursor.fetchone() is None:
-                        raise HTTPException(
-                            status_code=404,
-                            detail="Reservation introuvable"
-                        )
-
-            return {"message": "Reservation mis à jour"}
-
-        finally:
-            connection.close()
+        return {
+            "message": "Réservation ajoutée",
+            "id": reservation_id,
+        }
 
     except HTTPException:
+        if connection is not None:
+            connection.rollback()
         raise
 
-    except Exception:
+    except MySQLError:
+        if connection is not None:
+            connection.rollback()
         raise HTTPException(
-            status_code=500,
-            detail="Erreur lors de la modification du reservation"
-        )
+            status_code=503,
+            detail="Impossible d'enregistrer la réservation",
+        ) from None
+
+    finally:
+        if connection is not None:
+            connection.close()

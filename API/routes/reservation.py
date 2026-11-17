@@ -56,17 +56,3 @@ def create_reservation(reservation: ReservationCreate, utilisateur: dict = Depen
         reservation.id_chambre,
         id_client
     )
-
-@router.put("/{reservation_id}")
-def modifier_reservation(
-    reservation_id: int,
-    reservation: ReservationUpdate,
-    existante: dict = Depends(reservation_accessible),
-):
-    return update_reservation(
-        reservation_id,
-        reservation.date_debut,
-        reservation.date_fin,
-        reservation.nb_personnes,
-        reservation.id_chambre
-    )

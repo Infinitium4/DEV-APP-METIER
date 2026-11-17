@@ -146,39 +146,47 @@ def supprimer_nettoyage(nettoyage_id: int, id_personnel: int | None):
 
 
 def insert_nettoyage(date_debut: str, id_chambre: int, id_personnel: int):
+    connection = None
     try:
         connection = get_connection()
-        try:
-            with connection.cursor() as cursor:
-                # Le verrou empêche deux agents de s'affecter la même chambre.
-                cursor.execute("SELECT id, propre FROM chambre WHERE id = %s FOR UPDATE", (id_chambre,))
-                chambre = cursor.fetchone()
-                if chambre is None:
-                    raise HTTPException(status_code=404, detail="Chambre introuvable")
-                if chambre["propre"]:
-                    raise HTTPException(status_code=409, detail="Cette chambre est déjà propre")
-                cursor.execute(
-                    "SELECT id FROM nettoyage WHERE id_chambre = %s AND date_fin IS NULL LIMIT 1",
-                    (id_chambre,),
-                )
-                if cursor.fetchone() is not None:
-                    raise HTTPException(status_code=409, detail="Un nettoyage est déjà en cours")
-                cursor.execute(
-                    """
-                    INSERT INTO nettoyage (date_debut, id_chambre, id_personnel)
-                    VALUES (%s, %s, %s)
-                    """,
-                    (date_debut, id_chambre, id_personnel),
-                )
-                nettoyage_id = cursor.lastrowid
-            connection.commit()
-            return {"message": "Nettoyage ajouté", "id": nettoyage_id}
-        finally:
-            connection.close()
+        connection.begin()
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT id, propre FROM chambre WHERE id = %s FOR UPDATE",
+                (id_chambre,),
+            )
+            chambre = cursor.fetchone()
+            if chambre is None:
+                raise HTTPException(status_code=404, detail="Chambre introuvable")
+            if chambre["propre"]:
+                raise HTTPException(status_code=409, detail="La chambre est d\u00e9j\u00e0 propre")
+            cursor.execute(
+                "SELECT id FROM nettoyage WHERE id_chambre = %s AND date_fin IS NULL LIMIT 1 FOR UPDATE",
+                (id_chambre,),
+            )
+            if cursor.fetchone() is not None:
+                raise HTTPException(status_code=409, detail="Un nettoyage est d\u00e9j\u00e0 en cours")
+            cursor.execute(
+                """
+                INSERT INTO nettoyage (date_debut, id_chambre, id_personnel)
+                VALUES (%s, %s, %s)
+                """,
+                (date_debut, id_chambre, id_personnel),
+            )
+            nettoyage_id = cursor.lastrowid
+        connection.commit()
+        return {"message": "Nettoyage ajout\u00e9", "id": nettoyage_id}
     except HTTPException:
+        if connection is not None:
+            connection.rollback()
         raise
     except Exception:
-        raise HTTPException(status_code=500, detail="Erreur lors de la création du nettoyage") from None
+        if connection is not None:
+            connection.rollback()
+        raise HTTPException(status_code=500, detail="Impossible de d\u00e9marrer le nettoyage") from None
+    finally:
+        if connection is not None:
+            connection.close()
 
 
 def update_nettoyage(nettoyage_id: int, date_fin: str, id_personnel: int | None):

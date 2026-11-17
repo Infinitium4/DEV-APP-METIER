@@ -27,7 +27,7 @@ Suivi établi le 14 novembre 2026. À consulter avant une modification important
 ## Cohérence métier
 
 - [x] Nettoyages : rôles refusés en 403 par les dépendances ; vérification transactionnelle du propriétaire et de l'état actif avant modification/suppression.
-- [ ] Vérifier les chevauchements de réservations à la création et à la modification, y compris les demandes concurrentes.
+- [ ] Vérifier les chevauchements de réservations à la création, y compris les demandes concurrentes. La modification est supprimée : supprimer puis recréer une réservation pour la remplacer.
 - [ ] Calculer la disponibilité pour une période à partir des réservations. Le booléen `reserve` ne représente pas un calendrier.
 - [ ] Définir la capacité d'une chambre et vérifier `nb_personnes` par rapport à celle-ci.
 - [ ] Décider si terminer un nettoyage rend automatiquement la chambre propre ; si oui, effectuer les deux mises à jour dans une seule transaction.
@@ -67,6 +67,15 @@ Ces constats ne garantissent pas l'état de la VM et doivent être revérifiés 
 - Import de l'application, modèles OpenAPI des trois GET et syntaxe des 21 fichiers Python de l'API vérifiés. Aucun changement de schéma, aucune migration ni connexion à MariaDB réelle pour cette intervention.
 
 ## Méthode de vérification
+
+### Réconciliation après pull : réservations et nettoyages
+
+- Protections de rôle et de propriétaire du dépôt distant conservées ; inscription client via le routeur public, autres routes clients protégées individuellement. Messages des erreurs 404 conservés dans `detail`.
+- Suppression locale du modèle, de la route PUT et du service de modification des réservations conservée. Les réservations sont supprimées puis recréées ; aucune donnée ni migration BDD effectuée pendant cette intégration.
+- Validations de dates et quantités, verrou de chambre et contrôle de chevauchement à la création conservés, ainsi que la dépendance `tzdata`.
+- Démarrage du nettoyage : identité contrôlée dans les dépendances de rôle issues du JWT ; transaction explicite, verrou de chambre et lecture verrouillée des nettoyages actifs, rollback avant fermeture en cas d'erreur. Le contrôle local redondant du nom de rôle a été remplacé par les nouvelles dépendances pour préserver les droits managers définis dans le dépôt distant.
+- Remplacement d'une réservation : la nouvelle création reste soumise aux disponibilités et peut échouer après suppression. La fin du nettoyage et la propreté restent deux appels distincts, limitation existante hors de cette intégration.
+- Vérifications d'intégration : 49 tests pytest réussis (syntaxe et régressions API avec BDD simulée), syntaxe JavaScript et configuration Compose valides. Tests ajoutés pour inscription publique, droits, dates, identifiants absents, conflits de création, absence du PUT réservation, suppression par propriétaire et identité de nettoyage issue du JWT. Aucune donnée réelle écrite ; concurrence MariaDB, navigateur et déploiement non testés.
 
 ### Migration réservation sur la VM — 17 novembre 2026
 
