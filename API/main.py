@@ -11,17 +11,24 @@ from API.routes.reservation import router as reservation_router
 from API.routes.role import router as role_router
 from API.database import get_connection
 from API.routes.auth import router as auth_router
+from fastapi import APIRouter, Depends
+from API.securite import exiger_token_valide
 
 app = FastAPI()
 app.include_router(auth_router)
 
+routes_protegees = APIRouter(
+    dependencies=[Depends(exiger_token_valide)]
+)
 
-app.include_router(chambre_router)
-app.include_router(client_router)
-app.include_router(nettoyage_router)
-app.include_router(personnel_router)
-app.include_router(reservation_router)
-app.include_router(role_router)
+routes_protegees.include_router(chambre_router)
+routes_protegees.include_router(nettoyage_router)
+routes_protegees.include_router(personnel_router)
+routes_protegees.include_router(reservation_router)
+routes_protegees.include_router(role_router)
+routes_protegees.include_router(client_router)
+
+app.include_router(routes_protegees)
 
 @app.get("/api")
 def accueil():
